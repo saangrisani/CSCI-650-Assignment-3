@@ -49,60 +49,9 @@
     \item In this question we will write a simple function to simulate a Turing machine and use it to investigate $BB(2)$, the second busy beaver number.
     \begin{enumerate}
         \item (10 pts) Write a function \verb|simulateTM(delta, A, w)| which takes a transition function, a set of accepting states, and a string as input. This function should return a string associated with the final tape for the Turing machine along with a boolean indicating whether or not \verb|w| is accepted. We will assume that $A$ is the start state and that $b$ is the blank symbol. Submit your code on INGInious and include a code snippet of this function in your PDF submission. \verb|turingMachineTests.py|, a script meant to help with local testing, is available on Canvas.
-        \item (15 pts) Consider the \href{https://en.wikipedia.org/wiki/Busy_beaver}{busy beaver problem} as discussed in class. Write code to consider all Turing machines with two states, a binary input alphabet, and a tape initially filled with 0s. Augment your code from part $(a)$ to count the number of steps each machine takes before halting up to a maximum of 100 steps. Create a table similar to the one below indicating the number and fraction of machines that take $i$ steps to finish. Include a snippet of the code you used to find these values.
-
-        \begin{center}
-            \hspace*{-1cm}\begin{tabular}{c||c|c|c|c|c|c|c|c}
-                Steps & 0 & 1 & 2 & 3 & 4 & 5 & 6 & $\geq$ 100  \\ \hline
-                Number & 3 & 8 & 4 & 12 & 42 & 112 & 57 & 239 \\ \hline
-                Fraction & $0.1$ & $0.04$ & $0.2$ & $0.07$ & $0.06$ & $0.03$ & $0.05$ & $0.45$
-            \end{tabular}
-        \end{center}
-
-        
-        \item ($BB(n)$ pts for $n \geq 6$) Extra credit - Find a Turing machine associated with $BB(n)$ and prove that it is correct.
-    \end{enumerate}
-
-    \item (10 pts) Context-free grammars play an important role in many areas of computer science including in programming languages and compilers, natural language processing, and parsing among others.
-
-    Write a function \verb|cyk(G, w)| that takes a context-free grammar and a string as input and returns a boolean indicating whether or not the string is in the language associated with the context-free grammar along with a table filled in according to the CYK algorithm as discussed in class. Submit your code on INGInious and include a code snippet of this function in your PDF submission. \verb|cykTests.py|, a script meant to help with local testing, is available on Canvas.
-
-    \item Recall the definitions of the vertex cover and independent set problems.
-    \begin{definition}[Vertex Cover]
-    Given an undirected graph $G=(V,E)$, a \textbf{vertex cover} of $G$ is a subset of vertices $C \subseteq V$ such that, for every edge $\{u,v\} \in E$, either $u \in C$ or $v \in C$.
-    \end{definition}
-    \noindent \textbf{The Vertex Cover Problem} \\
-    \noindent \textbf{Input:} An undirected graph $G=(V,E)$ and an integer $k$. \\
-    \noindent \textbf{Output:} True if and only if $G$ has a vertex cover of size $k$ or less.
-    \begin{definition}[Independent Set]
-    Given an undirected graph $G=(V,E)$, an \textbf{independent set} is a subset of vertices $I \subseteq V$ such that no two elements of $I$ are adjacent. In particular, if $u,v \in I$, then $\{u,v\} \not \in E$.
-    \end{definition}
-    \noindent \textbf{The Independent Set Problem} \\
-    \noindent \textbf{Input:} An undirected graph $G=(V,E)$ and an integer $k$.\\
-    \noindent \textbf{Output:} True if and only if $G$ contains an independent set of size $k$ or more.
-    \begin{enumerate}
-        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|checkVertexCover(G, k, C)| that returns \verb|True| if $C$ is a vertex cover of $G$ of size $k$ or less and \verb|False| otherwise. Analyze the asymptotic runtime of this function.
-        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|findIndependentSet(G)| that finds an independent set of maximum size in $G$. You may assume access to a function \verb|findVertexCover(G)| that is guaranteed to return a vertex cover of $G$ of minimum size in polynomial time. In particular, \verb|findIndependentSet(G)| must convert an arbitrary independent set instance to an instance of vertex cover. Analyze the asymptotic runtime of this function.
-    \end{enumerate}
-
-    \item The set cover problem is defined as follows.
-    \begin{definition}[Set Cover]
-    Given a set of elements $U$ (often called the universe) and subsets $S_1, S_2, \dots, S_m \subseteq U$, $C \subseteq \{1, 2, \dots, m\}$ is a \textbf{set cover} of $U$ if $\bigcup_{i \in C} S_i = U$.
-    \end{definition}
-    \noindent \textbf{The Set Cover Problem} \\
-    \noindent \textbf{Input:} A universe $U$, sets $S_1, S_2, \dots, S_m \subseteq U$, and an integer $k$.\\
-    \noindent \textbf{Output:} True if and only if there is a cover $C$ of $U$ such that $|C| \leq k$.
-    \begin{enumerate}
-        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|checkSetCover(U, S, k, C)| that returns \verb|True| if $C$ is a set cover of $U$ of size $k$ or less and \verb|False| otherwise. Analyze the asymptotic runtime of this function.
-        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|findVertexCover(G)| that finds a vertex cover of minimum size in $G$. You may assume access to a function \verb|findSetCover(U, S)| that is guaranteed to return a minimum set cover of $U$ in polynomial time. In particular, \verb|findVertexCover(G)| must convert an arbitrary vertex cover instance to an instance of set cover. Analyze the asymptotic runtime of this function. \\
-    \end{enumerate}
-\end{enumerate}
 
 
-
-\clearpage
-\section*{Solutions: Sean Angrisani}
-\subsection*{1(a): Turing machine simulator}
+\paragraph{Answer 1(a).}\mbox{}\par
 The tape extends in both directions.
 Unstored cells are blank.
 Each transition updates one tape cell.
@@ -119,6 +68,7 @@ Its original fallback remains in place.
 Nonhalting machines can run forever.
 No arbitrary cutoff is imposed here.
 
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def simulateTM(delta, A, w):
   tape = dict(enumerate(w))
@@ -142,9 +92,20 @@ def simulateTM(delta, A, w):
     return False, result
   return False, ''
 \end{lstlisting}
+\end{minipage}\par
 
-\clearpage
-\subsection*{1(b): Two-state busy beaver experiment}
+        \item (15 pts) Consider the \href{https://en.wikipedia.org/wiki/Busy_beaver}{busy beaver problem} as discussed in class. Write code to consider all Turing machines with two states, a binary input alphabet, and a tape initially filled with 0s. Augment your code from part $(a)$ to count the number of steps each machine takes before halting up to a maximum of 100 steps. Create a table similar to the one below indicating the number and fraction of machines that take $i$ steps to finish. Include a snippet of the code you used to find these values.
+
+        \begin{center}
+            \hspace*{-1cm}\begin{tabular}{c||c|c|c|c|c|c|c|c}
+                Steps & 0 & 1 & 2 & 3 & 4 & 5 & 6 & $\geq$ 100  \\ \hline
+                Number & 3 & 8 & 4 & 12 & 42 & 112 & 57 & 239 \\ \hline
+                Fraction & $0.1$ & $0.04$ & $0.2$ & $0.07$ & $0.06$ & $0.03$ & $0.05$ & $0.45$
+            \end{tabular}
+        \end{center}
+
+
+\paragraph{Answer 1(b).}\mbox{}\par
 Use two working states.
 \[
 Q=\{A,B\},\qquad \Gamma=\{0,1\},\qquad q_{\mathrm{halt}}=H.
@@ -184,13 +145,9 @@ A cutoff alone cannot prove nontermination.
 Maximality remains unproved.
 The known step maximum agrees: $BB(2)=6$.
 See Aaronson's \href{https://www.scottaaronson.com/papers/bb.pdf}{The Busy Beaver Frontier} for context.
-The next page contains the counting code.
+The counting code appears directly below.
 
-\subsection*{1(c): Optional extra credit}
-This optional problem remains unattempted.
-
-\clearpage
-\subsection*{1(b): Counting code}
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 from collections import Counter
 from itertools import product
@@ -222,9 +179,126 @@ def busyBeaverCounts(max_steps=100):
         counts[bucket] += 1
     return counts
 \end{lstlisting}
+\end{minipage}\par
 
-\clearpage
-\subsection*{2: CYK algorithm}
+
+        
+        \item ($BB(n)$ pts for $n \geq 6$) Extra credit - Find a Turing machine associated with $BB(n)$ and prove that it is correct.
+
+
+\paragraph{Answer 1(c).}\mbox{}\par
+\paragraph{Attempt: a verified lower bound.}
+The exact value $BB(6)$ remains unknown.
+\href{https://wiki.bbchallenge.org/wiki/BB\%286\%29}{BBchallenge documents this open problem}.
+I therefore attempt a smaller, verifiable result.
+Consider Green's historical six-state machine below.
+It gives a lower bound for $BB(6)$.
+It does not prove maximality.
+
+There are six working states, $A$ through $F$.
+State $H$ halts execution.
+The head starts at position zero.
+Initially, every tape cell contains the symbol zero.
+The starting state is $A$.
+Read each entry as write, move, destination.
+For example, $1LB$ writes one and moves left.
+State $B$ follows.
+
+\begin{center}
+\begin{tabular}{c|c|c}
+State & Read 0 & Read 1 \\ \hline
+$A$ & $1LB$ & $1RH$ \\
+$B$ & $0LC$ & $1LC$ \\
+$C$ & $0LD$ & $0LC$ \\
+$D$ & $1LE$ & $1RA$ \\
+$E$ & $0LF$ & $0LE$ \\
+$F$ & $1RF$ & $1RD$
+\end{tabular}
+\end{center}
+
+Green introduced this machine in 1964.
+See \href{https://wiki.bbchallenge.org/wiki/BB\%286\%29}{BBchallenge's historical table} for its transitions.
+Michel's \href{https://bbchallenge.org/~pascal.michel/ha\#tm62}{historical survey} also records its 35 ones.
+The following code checks its complete run.
+No external imports are needed.
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}
+def checkSixState():
+    rules = {
+        'A': ('1LB', '1RH'),
+        'B': ('0LC', '1LC'),
+        'C': ('0LD', '0LC'),
+        'D': ('1LE', '1RA'),
+        'E': ('0LF', '0LE'),
+        'F': ('1RF', '1RD')
+    }
+    tape = {}
+    head = 0
+    state = 'A'
+    for step in range(1, 437):
+        assert state != 'H'
+        rule = rules[state][tape.get(head, 0)]
+        tape[head] = int(rule[0])
+        head += 1 if rule[1] == 'R' else -1
+        state = rule[2]
+    assert state == 'H'
+    assert sum(tape.values()) == 35
+    return step, sum(tape.values())
+
+print(checkSixState())
+\end{lstlisting}
+\end{minipage}\par
+
+The verified output equals the pair $(436,35)$.
+Several intermediate checkpoints are shown below.
+Head positions use the starting cell as zero.
+
+\begin{center}
+\begin{tabular}{r|c|r|r}
+Steps & State & Head & Ones \\ \hline
+0 & $A$ & 0 & 0 \\
+1 & $B$ & $-1$ & 1 \\
+2 & $C$ & $-2$ & 1 \\
+10 & $E$ & $-4$ & 4 \\
+100 & $F$ & $-12$ & 10 \\
+200 & $F$ & $-14$ & 14 \\
+300 & $F$ & $-12$ & 20 \\
+400 & $E$ & $-32$ & 3 \\
+436 & $H$ & 2 & 35
+\end{tabular}
+\end{center}
+
+\paragraph{Why this verifies the lower bound.}
+Initially, storage matches the blank machine.
+Each iteration reads the current tape symbol.
+The corresponding table entry is selected.
+The write, movement, and destination match that entry.
+Induction therefore preserves the actual machine configuration.
+Each iteration performs one transition.
+The assertions exclude halting before transition 436.
+The last assertion confirms halting.
+Thus, this finite computation verifies 436 steps.
+There are 35 remaining ones.
+Consequently, $BB(6)\geq436$ under the step-count convention.
+For ones counted, $\Sigma(6)\geq35$.
+
+This proves only a lower bound.
+Stronger bounds exist.
+Proving equality would require a matching upper bound.
+That comparison remains unresolved for six states.
+This is a partial extra-credit attempt.
+
+
+    \end{enumerate}
+
+    \clearpage
+    \item (10 pts) Context-free grammars play an important role in many areas of computer science including in programming languages and compilers, natural language processing, and parsing among others.
+
+    Write a function \verb|cyk(G, w)| that takes a context-free grammar and a string as input and returns a boolean indicating whether or not the string is in the language associated with the context-free grammar along with a table filled in according to the CYK algorithm as discussed in class. Submit your code on INGInious and include a code snippet of this function in your PDF submission. \verb|cykTests.py|, a script meant to help with local testing, is available on Canvas.
+
+
+\paragraph{Answer 2.}\mbox{}\par
 The supplied generator uses Chomsky normal form.
 Each production contains one terminal or two variables.
 The grammar representation follows that generator.
@@ -241,6 +315,7 @@ Matching rules contribute their head variables.
 Unused entries stay empty.
 The return value contains acceptance and table.
 
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def cyk(G, w):
     V, T, P, S = G
@@ -264,6 +339,7 @@ def cyk(G, w):
                             table[i][j].add(head)
     return S in table[0][n - 1], table
 \end{lstlisting}
+\end{minipage}\par
 
 Single-character matches establish the induction base.
 Assume shorter entries are correct.
@@ -280,12 +356,31 @@ The expected running time is $O((p+1)(n^3+1))$.
 This assumes constant-time hash operations.
 Storage is $O(n^2|V|)$.
 
-\clearpage
-\subsection*{3(a): Checking vertex covers}
+
+    \clearpage
+    \item Recall the definitions of the vertex cover and independent set problems.
+    \begin{definition}[Vertex Cover]
+    Given an undirected graph $G=(V,E)$, a \textbf{vertex cover} of $G$ is a subset of vertices $C \subseteq V$ such that, for every edge $\{u,v\} \in E$, either $u \in C$ or $v \in C$.
+    \end{definition}
+    \noindent \textbf{The Vertex Cover Problem} \\
+    \noindent \textbf{Input:} An undirected graph $G=(V,E)$ and an integer $k$. \\
+    \noindent \textbf{Output:} True if and only if $G$ has a vertex cover of size $k$ or less.
+    \begin{definition}[Independent Set]
+    Given an undirected graph $G=(V,E)$, an \textbf{independent set} is a subset of vertices $I \subseteq V$ such that no two elements of $I$ are adjacent. In particular, if $u,v \in I$, then $\{u,v\} \not \in E$.
+    \end{definition}
+    \noindent \textbf{The Independent Set Problem} \\
+    \noindent \textbf{Input:} An undirected graph $G=(V,E)$ and an integer $k$.\\
+    \noindent \textbf{Output:} True if and only if $G$ contains an independent set of size $k$ or more.
+    \begin{enumerate}
+        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|checkVertexCover(G, k, C)| that returns \verb|True| if $C$ is a vertex cover of $G$ of size $k$ or less and \verb|False| otherwise. Analyze the asymptotic runtime of this function.
+
+
+\paragraph{Answer 3(a).}\mbox{}\par
 Represent the graph as $(V,E)$.
 Vertices and certificates use Python sets.
 Edges pair vertices.
 
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def checkVertexCover(G, k, C):
     V, E = G
@@ -296,6 +391,7 @@ def checkVertexCover(G, k, C):
             return False
     return True
 \end{lstlisting}
+\end{minipage}\par
 
 The first check rejects oversized or invalid certificates.
 Each remaining edge needs one selected endpoint.
@@ -309,13 +405,18 @@ Valid certificates satisfy $|C|\leq |V|$.
 Hence, $O(1+|V|+|E|)$ bounds valid inputs.
 Auxiliary space remains constant.
 
-\subsection*{3(b): Finding maximum independent sets}
+        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|findIndependentSet(G)| that finds an independent set of maximum size in $G$. You may assume access to a function \verb|findVertexCover(G)| that is guaranteed to return a vertex cover of $G$ of minimum size in polynomial time. In particular, \verb|findIndependentSet(G)| must convert an arbitrary independent set instance to an instance of vertex cover. Analyze the asymptotic runtime of this function.
+
+
+\paragraph{Answer 3(b).}\mbox{}\par
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def findIndependentSet(G):
     V, E = G
     C = findVertexCover(G)
     return V - C
 \end{lstlisting}
+\end{minipage}\par
 
 The reduction preserves the original graph.
 Decision instances transform as follows.
@@ -337,13 +438,26 @@ The total runtime is $T_{\mathrm{VC}}(G)+O(1+|V|)$.
 This is polynomial under the stated assumption.
 The returned set needs $O(|V|)$ space.
 
-\clearpage
-\subsection*{4(a): Checking set covers}
+    \end{enumerate}
+
+    \item The set cover problem is defined as follows.
+    \begin{definition}[Set Cover]
+    Given a set of elements $U$ (often called the universe) and subsets $S_1, S_2, \dots, S_m \subseteq U$, $C \subseteq \{1, 2, \dots, m\}$ is a \textbf{set cover} of $U$ if $\bigcup_{i \in C} S_i = U$.
+    \end{definition}
+    \noindent \textbf{The Set Cover Problem} \\
+    \noindent \textbf{Input:} A universe $U$, sets $S_1, S_2, \dots, S_m \subseteq U$, and an integer $k$.\\
+    \noindent \textbf{Output:} True if and only if there is a cover $C$ of $U$ such that $|C| \leq k$.
+    \begin{enumerate}
+        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|checkSetCover(U, S, k, C)| that returns \verb|True| if $C$ is a set cover of $U$ of size $k$ or less and \verb|False| otherwise. Analyze the asymptotic runtime of this function.
+
+
+\paragraph{Answer 4(a).}\mbox{}\par
 Use sets for the universe and certificate.
 Subset indices begin at one.
 Store subsets in a dictionary $S$.
 Its keys are $1,\ldots,m$.
 
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def checkSetCover(U, S, k, C):
     if len(C) > k:
@@ -355,6 +469,7 @@ def checkSetCover(U, S, k, C):
         covered.update(S[i])
     return covered == U
 \end{lstlisting}
+\end{minipage}\par
 
 The initial check enforces the size limit.
 Invalid subset indices cause rejection.
@@ -371,7 +486,11 @@ Hash operations take expected constant time.
 Auxiliary space is $O(1+|U|)$.
 This uses the given assumption $S_i\subseteq U$.
 
-\subsection*{4(b): Reducing vertex cover to set cover}
+        \item (10 pts) Write pseudocode (using Python syntax) for a function \verb|findVertexCover(G)| that finds a vertex cover of minimum size in $G$. You may assume access to a function \verb|findSetCover(U, S)| that is guaranteed to return a minimum set cover of $U$ in polynomial time. In particular, \verb|findVertexCover(G)| must convert an arbitrary vertex cover instance to an instance of set cover. Analyze the asymptotic runtime of this function. \\
+
+
+\paragraph{Answer 4(b).}\mbox{}\par
+\par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def findVertexCover(G):
     V, E = G
@@ -385,6 +504,7 @@ def findVertexCover(G):
     C = findSetCover(U, S)
     return {vertices[i - 1] for i in C}
 \end{lstlisting}
+\end{minipage}\par
 
 Each universe element identifies one graph edge.
 Subsets collect incident edges.
@@ -403,6 +523,10 @@ The oracle takes $T_{\mathrm{SC}}(U,S)$ time.
 Total time is $T_{\mathrm{SC}}(U,S)+O(1+|V|+|E|)$.
 This remains polynomial under the given assumption.
 Additional storage is $O(1+|V|+|E|)$.
+
+    \end{enumerate}
+\end{enumerate}
+
 
 \end{document}
 
