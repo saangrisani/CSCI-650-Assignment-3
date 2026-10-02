@@ -13,12 +13,35 @@ from itertools import product
 #w - string - the input string to provide to the Turing machine
 #Return True if w is recognized and False otherwise in addition to the final tape for the Turing machine.
 def simulateTM(delta, A, w):
+  tape = dict(enumerate(w))
+  state = 'A'
+  head = 0
+  while state not in A:
+    symbol = tape.get(head, 'b')
+    if (state, symbol) not in delta:
+      break
+    state, symbol, direction = delta[(state, symbol)]
+    tape[head] = symbol
+    head += 1 if direction == 'R' else -1
+  result = ''
+  if tape:
+    result = ''.join(tape.get(i, 'b')
+                     for i in range(min(tape), max(tape) + 1))
+    result = result.strip('b')
+  if state in A:
+    return True, result
+  if result:
+    return False, result
   return False, ''
 
 ##########################
 ### MAIN FOR INGINIOUS ###
 ##########################
 def main(M):
+  lines = M.split('\n')
+  if not lines[int(lines[0]) + 2].strip():
+    lines[int(lines[0]) + 2] = 'b'
+    M = '\n'.join(lines)
   M = M.strip().split('\n')
   w = M[-1].strip()
   A = M[-2].strip().split(' ')
@@ -40,4 +63,5 @@ if __name__=='__main__':
   M += input("Enter a string to check: ")
   result = main(M)
   print(result)
+
 

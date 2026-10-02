@@ -21,6 +21,14 @@
 
 \date{}
 
+\usepackage{listings}
+\geometry{total={6.2in,8.5in}}
+\emergencystretch=3em
+\lstset{basicstyle=\ttfamily\footnotesize,columns=fullflexible,
+        keepspaces=true,showstringspaces=false,breaklines=true}
+\author{Sean Angrisani}
+\date{September 30, 2026}
+
 \begin{document}
 
 \maketitle
@@ -90,6 +98,311 @@
     \end{enumerate}
 \end{enumerate}
 
+
+
+\clearpage
+\section*{Solutions: Sean Angrisani}
+\subsection*{1(a): Turing machine simulator}
+The tape extends in both directions.
+Unstored cells are blank.
+Each transition updates one tape cell.
+The head then moves left or right.
+Acceptance stops execution immediately.
+Missing transitions halt the machine without accepting.
+Return acceptance alongside all the final tape contents.
+Only outer blanks are removed.
+Internal blanks stay.
+An entirely blank tape returns an empty string.
+
+The supplied skeleton determines the return order.
+Its original fallback remains in place.
+Nonhalting machines can run forever.
+No arbitrary cutoff is imposed here.
+
+\begin{lstlisting}
+def simulateTM(delta, A, w):
+  tape = dict(enumerate(w))
+  state = 'A'
+  head = 0
+  while state not in A:
+    symbol = tape.get(head, 'b')
+    if (state, symbol) not in delta:
+      break
+    state, symbol, direction = delta[(state, symbol)]
+    tape[head] = symbol
+    head += 1 if direction == 'R' else -1
+  result = ''
+  if tape:
+    result = ''.join(tape.get(i, 'b')
+                     for i in range(min(tape), max(tape) + 1))
+    result = result.strip('b')
+  if state in A:
+    return True, result
+  if result:
+    return False, result
+  return False, ''
+\end{lstlisting}
+
+\clearpage
+\subsection*{1(b): Two-state busy beaver experiment}
+Use two working states.
+\[
+Q=\{A,B\},\qquad \Gamma=\{0,1\},\qquad q_{\mathrm{halt}}=H.
+\]
+State $A$ starts each run.
+Every tape cell initially contains zero.
+The halt state is additional.
+Each transition writes, moves, and changes state.
+Halting transitions also count as steps.
+Every state-symbol pair has twelve possible transitions.
+There are four such pairs.
+Thus, the enumeration contains $12^4=20{,}736$ machines.
+Mirrors count separately.
+Unreachable transition choices also remain distinct.
+
+\begin{center}
+\small
+\begin{tabular}{c|r|r}
+Steps & Number & Fraction \\ \hline
+0 & 0 & $0/20736$ \\
+1 & 6912 & $6912/20736$ \\
+2 & 2304 & $2304/20736$ \\
+3 & 384 & $384/20736$ \\
+4 & 128 & $128/20736$ \\
+5 & 16 & $16/20736$ \\
+6 & 40 & $40/20736$ \\
+7--99 & 0 & $0/20736$ \\
+$\geq 100$ or unresolved & 10952 & $10952/20736$ \\ \hline
+Total & 20736 & $1$
+\end{tabular}
+\end{center}
+
+The last bucket includes unresolved machine runs.
+Halting after exactly 100 steps also belongs here.
+The largest observed halting time is six.
+A cutoff alone cannot prove nontermination.
+Maximality remains unproved.
+The known step maximum agrees: $BB(2)=6$.
+See Aaronson's \href{https://www.scottaaronson.com/papers/bb.pdf}{The Busy Beaver Frontier} for context.
+The next page contains the counting code.
+
+\subsection*{1(c): Optional extra credit}
+This optional problem remains unattempted.
+
+\clearpage
+\subsection*{1(b): Counting code}
+\begin{lstlisting}
+from collections import Counter
+from itertools import product
+
+
+def countSteps(delta, max_steps=100):
+    tape = {}
+    state = 'A'
+    head = 0
+    for steps in range(max_steps):
+        if state == 'H':
+            return steps
+        state, symbol, direction = delta[(state, tape.get(head, '0'))]
+        tape[head] = symbol
+        head += 1 if direction == 'R' else -1
+    if state == 'H':
+        return max_steps
+    return None
+
+
+def busyBeaverCounts(max_steps=100):
+    keys = list(product('AB', '01'))
+    choices = list(product('ABH', '01', 'LR'))
+    counts = Counter()
+    for transitions in product(choices, repeat=4):
+        delta = dict(zip(keys, transitions))
+        steps = countSteps(delta, max_steps)
+        bucket = max_steps if steps is None else steps
+        counts[bucket] += 1
+    return counts
+\end{lstlisting}
+
+\clearpage
+\subsection*{2: CYK algorithm}
+The supplied generator uses Chomsky normal form.
+Each production contains one terminal or two variables.
+The grammar representation follows that generator.
+\[
+G=(V,T,P,S).
+\]
+Here, $P$ maps variables to production sets.
+The table uses inclusive substring endpoints.
+Thus, \texttt{table[i][j]} describes \texttt{w[i:j+1]}.
+Each cell stores possible generating variables.
+Diagonal entries match characters.
+Longer substrings consider every possible split point.
+Matching rules contribute their head variables.
+Unused entries stay empty.
+The return value contains acceptance and table.
+
+\begin{lstlisting}
+def cyk(G, w):
+    V, T, P, S = G
+    n = len(w)
+    table = [[set() for _ in range(n)] for _ in range(n)]
+    if n == 0:
+        return '' in P.get(S, set()), table
+    for i in range(n):
+        for head, bodies in P.items():
+            if w[i] in bodies:
+                table[i][i].add(head)
+    for length in range(2, n + 1):
+        for i in range(n - length + 1):
+            j = i + length - 1
+            for k in range(i, j):
+                for head, bodies in P.items():
+                    for body in bodies:
+                        if (len(body) == 2
+                                and body[0] in table[i][k]
+                                and body[1] in table[k + 1][j]):
+                            table[i][j].add(head)
+    return S in table[0][n - 1], table
+\end{lstlisting}
+
+Single-character matches establish the induction base.
+Assume shorter entries are correct.
+Each split combines two correct shorter entries.
+Every binary derivation splits this way.
+Therefore, each computed cell contains exactly its generators.
+Acceptance checks the complete string's cell.
+Empty input uses the start variable's empty production.
+Its table contains no cells.
+
+Let $n$ denote the input length.
+Let $p$ count grammar productions.
+The expected running time is $O((p+1)(n^3+1))$.
+This assumes constant-time hash operations.
+Storage is $O(n^2|V|)$.
+
+\clearpage
+\subsection*{3(a): Checking vertex covers}
+Represent the graph as $(V,E)$.
+Vertices and certificates use Python sets.
+Edges pair vertices.
+
+\begin{lstlisting}
+def checkVertexCover(G, k, C):
+    V, E = G
+    if len(C) > k or not C.issubset(V):
+        return False
+    for u, v in E:
+        if u not in C and v not in C:
+            return False
+    return True
+\end{lstlisting}
+
+The first check rejects oversized or invalid certificates.
+Each remaining edge needs one selected endpoint.
+Any uncovered edge causes rejection.
+Otherwise, every edge is covered within budget.
+This matches the vertex cover definition.
+
+Membership checks take expected constant time here.
+The expected runtime is $O(1+|C|+|E|)$.
+Valid certificates satisfy $|C|\leq |V|$.
+Hence, $O(1+|V|+|E|)$ bounds valid inputs.
+Auxiliary space remains constant.
+
+\subsection*{3(b): Finding maximum independent sets}
+\begin{lstlisting}
+def findIndependentSet(G):
+    V, E = G
+    C = findVertexCover(G)
+    return V - C
+\end{lstlisting}
+
+The reduction preserves the original graph.
+Decision instances transform as follows.
+\[
+(G,k)_{\mathrm{IS}}\longmapsto(G,|V|-k)_{\mathrm{VC}}.
+\]
+Let $C$ denote any vertex cover.
+No edge can join two vertices outside $C$.
+Consequently, $V\setminus C$ is independent.
+Conversely, take any independent set $I$.
+Every edge has an endpoint outside $I$.
+Thus, $V\setminus I$ covers all edges.
+Together, their complementary sizes always sum to $|V|$.
+Minimizing one therefore maximizes the other.
+The oracle supplies the required minimum cover.
+
+Let $T_{\mathrm{VC}}$ denote the oracle runtime.
+The total runtime is $T_{\mathrm{VC}}(G)+O(1+|V|)$.
+This is polynomial under the stated assumption.
+The returned set needs $O(|V|)$ space.
+
+\clearpage
+\subsection*{4(a): Checking set covers}
+Use sets for the universe and certificate.
+Subset indices begin at one.
+Store subsets in a dictionary $S$.
+Its keys are $1,\ldots,m$.
+
+\begin{lstlisting}
+def checkSetCover(U, S, k, C):
+    if len(C) > k:
+        return False
+    covered = set()
+    for i in C:
+        if i not in S:
+            return False
+        covered.update(S[i])
+    return covered == U
+\end{lstlisting}
+
+The initial check enforces the size limit.
+Invalid subset indices cause rejection.
+The union collects every selected subset's elements.
+Equality checks completeness.
+Therefore, acceptance exactly matches a valid cover.
+
+Define the selected input size below.
+\[
+L_C=\sum_{i\in C}|S_i|.
+\]
+Expected runtime is $O(1+|C|+L_C+|U|)$.
+Hash operations take expected constant time.
+Auxiliary space is $O(1+|U|)$.
+This uses the given assumption $S_i\subseteq U$.
+
+\subsection*{4(b): Reducing vertex cover to set cover}
+\begin{lstlisting}
+def findVertexCover(G):
+    V, E = G
+    vertices = list(V)
+    index = {v: i + 1 for i, v in enumerate(vertices)}
+    U = set(range(len(E)))
+    S = {i + 1: set() for i in range(len(vertices))}
+    for edge, (u, v) in enumerate(E):
+        S[index[u]].add(edge)
+        S[index[v]].add(edge)
+    C = findSetCover(U, S)
+    return {vertices[i - 1] for i in C}
+\end{lstlisting}
+
+Each universe element identifies one graph edge.
+Subsets collect incident edges.
+The oracle returns selected subset indices.
+These indices map directly back to vertices.
+Every covered element therefore has a selected endpoint.
+Conversely, every vertex cover selects covering subsets.
+The two selections have equal sizes.
+Minimum set covers therefore yield minimum vertex covers.
+Decision instances keep the same budget $k$.
+
+Assume $E$ is an edge list.
+Construction takes expected $O(1+|V|+|E|)$ time.
+The total incidence count is $2|E|$.
+The oracle takes $T_{\mathrm{SC}}(U,S)$ time.
+Total time is $T_{\mathrm{SC}}(U,S)+O(1+|V|+|E|)$.
+This remains polynomial under the given assumption.
+Additional storage is $O(1+|V|+|E|)$.
 
 \end{document}
 
