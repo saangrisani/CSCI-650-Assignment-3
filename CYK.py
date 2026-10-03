@@ -21,6 +21,29 @@ def cyk(G, w):
     return S in table[0][n - 1], table
 
 
+def main(M):
+    lines = M.splitlines()
+    n = int(lines[0])
+    P = {}
+    S = None
+    for line in lines[1:n + 1]:
+        head, bodies = line.split('->')
+        head = head.strip()
+        if S is None:
+            S = head
+        P.setdefault(head, set()).update(
+            body.strip() for body in bodies.split('|') if body.strip())
+    V = set(P)
+    T = {body for bodies in P.values()
+         for body in bodies if len(body) == 1}
+    w = lines[n + 1].strip() if len(lines) > n + 1 else ''
+    accepted, table = cyk((V, T, P, S), w)
+    output = [' '.join('{' + ','.join(sorted(cell)) + '}'
+                       for cell in row) for row in table]
+    output.append(str(accepted))
+    return '\n'.join(output)
+
+
 if __name__ == '__main__':
     n = int(input())
     P = {}
