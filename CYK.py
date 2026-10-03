@@ -21,7 +21,14 @@ def cyk(G, w):
     return S in table[0][n - 1], table
 
 
-def main(M):
+def main(V, T=None, P=None, S=None, w=None):
+    if T is not None:
+        accepted, table = cyk((V, T, P, S), w)
+        output = [' '.join('{' + ','.join(sorted(cell)) + '}'
+                           for cell in row) for row in table]
+        output.append(str(accepted))
+        return '\n'.join(output)
+    M = V
     lines = M.splitlines()
     n = int(lines[0])
     P = {}
