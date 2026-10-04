@@ -209,38 +209,39 @@ The grammar representation follows that generator.
 G=(V,T,P,S).
 \]
 Here, $P$ maps variables to production sets.
-The table uses inclusive substring endpoints.
-Thus, \texttt{table[i][j]} describes \texttt{w[i:j+1]}.
+Rows correspond to increasing substring lengths.
+Thus, \texttt{M[r][c]} describes \texttt{w[c:c+r+1]}.
 Each cell stores possible generating variables.
-Diagonal entries match characters.
+The first row matches characters.
 Longer substrings consider every possible split point.
 Matching rules contribute their head variables.
-Unused entries stay empty.
+Rows shrink successively.
 The return value contains acceptance and table.
 
 \par\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}
 def cyk(G, w):
+    M = [[set() for _ in range(len(w)-i)] for i in range(len(w))]
     V, T, P, S = G
-    n = len(w)
-    table = [[set() for _ in range(n)] for _ in range(n)]
-    if n == 0:
-        return '' in P.get(S, set()), table
-    for i in range(n):
+    if not w:
+        return '' in P.get(S, set()), M
+    for i, symbol in enumerate(w):
         for head, bodies in P.items():
-            if w[i] in bodies:
-                table[i][i].add(head)
-    for length in range(2, n + 1):
-        for i in range(n - length + 1):
-            j = i + length - 1
-            for k in range(i, j):
+            if symbol in bodies:
+                M[0][i].add(head)
+    for length in range(2, len(w) + 1):
+        for start in range(len(w) - length + 1):
+            for left_length in range(1, length):
+                left = M[left_length - 1][start]
+                right = M[length - left_length - 1][start + left_length]
                 for head, bodies in P.items():
                     for body in bodies:
                         if (len(body) == 2
-                                and body[0] in table[i][k]
-                                and body[1] in table[k + 1][j]):
-                            table[i][j].add(head)
-    return S in table[0][n - 1], table
+                                and body[0] in left and body[1] in right):
+                            M[length - 1][start].add(head)
+    if S in M[-1][0]:
+        return True, M
+    return False, M
 \end{lstlisting}
 \end{minipage}\par
 
