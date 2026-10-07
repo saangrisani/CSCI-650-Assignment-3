@@ -5,6 +5,8 @@
 \graphicspath{ {../Figures/} }
 
 \usepackage{amsmath}
+\usepackage{listings,tikz}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false}
 \usepackage[a4paper, total={6.2in, 8in}]{geometry}
 
 \usepackage[usenames,dvipsnames]{color}
@@ -41,14 +43,297 @@
     \item In this problem we will develop and analyze two heuristic approaches to solving the \href{https://en.wikipedia.org/wiki/Travelling_salesman_problem|}{Traveling Salesman problem}, one using nearest neighbors and the other using simulated annealing.
 
     \begin{center}
-        \includegraphics[scale=0.5]{CSCI_650/Figures/xkcd_travelling_salesman_problem.png}
+        \IfFileExists{CSCI_650/Figures/xkcd_travelling_salesman_problem.png}{\includegraphics[scale=0.5]{CSCI_650/Figures/xkcd_travelling_salesman_problem.png}}{}
     \end{center}
     {\tiny{\url{https://xkcd.com/399/}}}
     
     \begin{enumerate}
         \item (5 pts) Write a function \verb|totalDistance(D, path)| which returns the total distance a traveling salesman must travel given a sequence of cities. \verb|path| will include each city exactly once, note that the salesman must end at the start city. Submit your code on INGInious and include a code snippet of this function in your PDF submission.
+
+\paragraph{Answer.}
+
+The route lists each city once. Sum the directed distances between consecutive cities and include the final edge back to the first city. Empty routes have distance zero. The calculation takes O(n) time and O(1) auxiliary space.
+
+\begin{lstlisting}
+def totalDistance(D, path):
+  if not path:
+    return 0.0
+  return float(sum(D[path[j]][path[(j + 1) % len(path)]]
+          for j in range(len(path))))
+\end{lstlisting}
+
         \item (10 pts) Write a function \verb|nearestNeighbor(D, start)| which returns an order in which to visit cities with associated distance matrix \verb|D| starting at \verb|start| and following the nearest neighbor heuristic. Submit your code on INGInious and include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function?
+
+\paragraph{Answer.}
+
+Start at the requested city, or choose a random city when start is -1. Repeatedly select the closest unvisited city; ties go to the smaller city index. The returned route contains each city exactly once.
+
+\begin{lstlisting}
+def nearestNeighbor(D, start=-1):
+  n = len(D)
+  if n == 0:
+    return []
+  if start == -1:
+    start = int(np.random.randint(n))
+  path = [start]
+  remaining = set(range(n))
+  remaining.remove(start)
+  while remaining:
+    city = min(remaining, key=lambda v: (D[path[-1]][v], v))
+    path.append(city)
+    remaining.remove(city)
+  return path
+\end{lstlisting}
+
+At successive steps the algorithm examines n-1, n-2, ..., 1 remaining cities. Their sum is n(n-1)/2, so the runtime is Theta(n squared), assuming constant-time matrix access and expected constant-time set operations. Auxiliary space is O(n). This greedy rule does not guarantee an optimal tour.
+
         \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate histograms depicting the distribution of ratios (observed distance)/(minimum observed distance) under different circumstances. Describe what you observe.
+
+\paragraph{Answer.}
+
+The supplied tests used NumPy and Python random seeds of 65004. Each of three families used 50 independently generated distance matrices with 100 cities. Each matrix was tested at every starting city, yielding 5,000 ratios per family and 25 histogram bins. Each denominator is the minimum nearest-neighbor tour observed on that matrix, not a proven optimal TSP distance.
+
+\begin{center}\begin{tabular}{lllll}
+
+Family & Mean & Median & 95th percentile & Maximum \\ Barabasi-Albert & 1.034 & 1.032 & 1.065 & 1.113 \\ Watts-Strogatz & 1.092 & 1.085 & 1.198 & 1.317 \\ Uniform Random & 1.421 & 1.411 & 1.772 & 2.188 \\ 
+
+\end{tabular}\end{center}
+
+Barabasi-Albert ratios cluster tightly near 1: the average tour is about 3.45\% longer than the best start for its matrix. Watts-Strogatz has a wider distribution, averaging about 9.20\% above its best start. Uniform Random is much more sensitive to start: the mean is about 42.09\% above the best observed start, with a maximum ratio of 2.188. The uniform matrices are asymmetric and need not satisfy the triangle inequality; an inexpensive greedy edge can leave an expensive closing edge.
+
+All starts on one matrix share its denominator and are dependent observations. These histograms describe these sampled instances; they do not establish approximation guarantees. Trying several starts can improve the observed nearest-neighbor result.
+\begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
+
+\put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
+
+\put(0,25.00){\makebox(30,0)[r]{\scriptsize 0.00}}
+
+\put(0,66.67){\makebox(30,0)[r]{\scriptsize 12.65}}
+
+\put(0,108.33){\makebox(30,0)[r]{\scriptsize 25.30}}
+
+\put(0,150.00){\makebox(30,0)[r]{\scriptsize 37.94}}
+
+\put(35.00,13){\makebox(0,0){\scriptsize 1.00}}
+
+\put(155.00,13){\makebox(0,0){\scriptsize 1.04}}
+
+\put(275.00,13){\makebox(0,0){\scriptsize 1.07}}
+
+\put(395.00,13){\makebox(0,0){\scriptsize 1.11}}
+
+{\color{blue}
+
+\put(27.80,25){\rule{14.40pt}{13.86pt}}
+
+\put(42.80,25){\rule{14.40pt}{38.22pt}}
+
+\put(57.80,25){\rule{14.40pt}{0.00pt}}
+
+\put(72.80,25){\rule{14.40pt}{80.97pt}}
+
+\put(87.80,25){\rule{14.40pt}{23.49pt}}
+
+\put(102.80,25){\rule{14.40pt}{98.04pt}}
+
+\put(117.80,25){\rule{14.40pt}{104.31pt}}
+
+\put(132.80,25){\rule{14.40pt}{39.54pt}}
+
+\put(147.80,25){\rule{14.40pt}{119.05pt}}
+
+\put(162.80,25){\rule{14.40pt}{14.01pt}}
+
+\put(177.80,25){\rule{14.40pt}{80.82pt}}
+
+\put(192.80,25){\rule{14.40pt}{13.13pt}}
+
+\put(207.80,25){\rule{14.40pt}{43.18pt}}
+
+\put(222.80,25){\rule{14.40pt}{19.84pt}}
+
+\put(237.80,25){\rule{14.40pt}{12.55pt}}
+
+\put(252.80,25){\rule{14.40pt}{14.44pt}}
+
+\put(267.80,25){\rule{14.40pt}{2.92pt}}
+
+\put(282.80,25){\rule{14.40pt}{8.17pt}}
+
+\put(297.80,25){\rule{14.40pt}{0.29pt}}
+
+\put(312.80,25){\rule{14.40pt}{2.19pt}}
+
+\put(327.80,25){\rule{14.40pt}{0.00pt}}
+
+\put(342.80,25){\rule{14.40pt}{0.00pt}}
+
+\put(357.80,25){\rule{14.40pt}{0.15pt}}
+
+\put(372.80,25){\rule{14.40pt}{0.00pt}}
+
+\put(387.80,25){\rule{14.40pt}{0.29pt}}
+
+\put(40,172){\makebox(0,0)[l]{\scriptsize Barabasi-Albert}}}
+
+\end{picture}}\end{center}
+
+Horizontal axis: tour distance / minimum distance on the same matrix. Vertical axis: probability density, matching density=True in the supplied script.
+\begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
+
+\put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
+
+\put(0,25.00){\makebox(30,0)[r]{\scriptsize 0.00}}
+
+\put(0,66.67){\makebox(30,0)[r]{\scriptsize 3.67}}
+
+\put(0,108.33){\makebox(30,0)[r]{\scriptsize 7.35}}
+
+\put(0,150.00){\makebox(30,0)[r]{\scriptsize 11.02}}
+
+\put(35.00,13){\makebox(0,0){\scriptsize 1.01}}
+
+\put(155.00,13){\makebox(0,0){\scriptsize 1.11}}
+
+\put(275.00,13){\makebox(0,0){\scriptsize 1.21}}
+
+\put(395.00,13){\makebox(0,0){\scriptsize 1.31}}
+
+{\color{blue}
+
+\put(27.80,25){\rule{14.40pt}{52.27pt}}
+
+\put(42.80,25){\rule{14.40pt}{34.73pt}}
+
+\put(57.80,25){\rule{14.40pt}{51.74pt}}
+
+\put(72.80,25){\rule{14.40pt}{119.05pt}}
+
+\put(87.80,25){\rule{14.40pt}{68.03pt}}
+
+\put(102.80,25){\rule{14.40pt}{66.95pt}}
+
+\put(117.80,25){\rule{14.40pt}{81.63pt}}
+
+\put(132.80,25){\rule{14.40pt}{72.14pt}}
+
+\put(147.80,25){\rule{14.40pt}{56.93pt}}
+
+\put(162.80,25){\rule{14.40pt}{65.88pt}}
+
+\put(177.80,25){\rule{14.40pt}{48.51pt}}
+
+\put(192.80,25){\rule{14.40pt}{39.38pt}}
+
+\put(207.80,25){\rule{14.40pt}{27.75pt}}
+
+\put(222.80,25){\rule{14.40pt}{26.67pt}}
+
+\put(237.80,25){\rule{14.40pt}{31.69pt}}
+
+\put(252.80,25){\rule{14.40pt}{14.50pt}}
+
+\put(267.80,25){\rule{14.40pt}{11.46pt}}
+
+\put(282.80,25){\rule{14.40pt}{10.74pt}}
+
+\put(297.80,25){\rule{14.40pt}{6.44pt}}
+
+\put(312.80,25){\rule{14.40pt}{3.22pt}}
+
+\put(327.80,25){\rule{14.40pt}{2.51pt}}
+
+\put(342.80,25){\rule{14.40pt}{1.61pt}}
+
+\put(357.80,25){\rule{14.40pt}{0.72pt}}
+
+\put(372.80,25){\rule{14.40pt}{0.00pt}}
+
+\put(387.80,25){\rule{14.40pt}{0.54pt}}
+
+\put(40,172){\makebox(0,0)[l]{\scriptsize Watts-Strogatz}}}
+
+\end{picture}}\end{center}
+
+Horizontal axis: tour distance / minimum distance on the same matrix. Vertical axis: probability density, matching density=True in the supplied script.
+\begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
+
+\put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
+
+\put(0,25.00){\makebox(30,0)[r]{\scriptsize 0.00}}
+
+\put(0,66.67){\makebox(30,0)[r]{\scriptsize 0.70}}
+
+\put(0,108.33){\makebox(30,0)[r]{\scriptsize 1.40}}
+
+\put(0,150.00){\makebox(30,0)[r]{\scriptsize 2.10}}
+
+\put(35.00,13){\makebox(0,0){\scriptsize 1.02}}
+
+\put(155.00,13){\makebox(0,0){\scriptsize 1.40}}
+
+\put(275.00,13){\makebox(0,0){\scriptsize 1.78}}
+
+\put(395.00,13){\makebox(0,0){\scriptsize 2.16}}
+
+{\color{blue}
+
+\put(27.80,25){\rule{14.40pt}{32.33pt}}
+
+\put(42.80,25){\rule{14.40pt}{23.06pt}}
+
+\put(57.80,25){\rule{14.40pt}{44.11pt}}
+
+\put(72.80,25){\rule{14.40pt}{59.90pt}}
+
+\put(87.80,25){\rule{14.40pt}{82.71pt}}
+
+\put(102.80,25){\rule{14.40pt}{92.23pt}}
+
+\put(117.80,25){\rule{14.40pt}{95.99pt}}
+
+\put(132.80,25){\rule{14.40pt}{119.05pt}}
+
+\put(147.80,25){\rule{14.40pt}{116.79pt}}
+
+\put(162.80,25){\rule{14.40pt}{106.27pt}}
+
+\put(177.80,25){\rule{14.40pt}{108.77pt}}
+
+\put(192.80,25){\rule{14.40pt}{90.73pt}}
+
+\put(207.80,25){\rule{14.40pt}{72.93pt}}
+
+\put(222.80,25){\rule{14.40pt}{60.90pt}}
+
+\put(237.80,25){\rule{14.40pt}{46.37pt}}
+
+\put(252.80,25){\rule{14.40pt}{32.33pt}}
+
+\put(267.80,25){\rule{14.40pt}{25.06pt}}
+
+\put(282.80,25){\rule{14.40pt}{15.29pt}}
+
+\put(297.80,25){\rule{14.40pt}{11.28pt}}
+
+\put(312.80,25){\rule{14.40pt}{7.77pt}}
+
+\put(327.80,25){\rule{14.40pt}{3.51pt}}
+
+\put(342.80,25){\rule{14.40pt}{3.01pt}}
+
+\put(357.80,25){\rule{14.40pt}{0.50pt}}
+
+\put(372.80,25){\rule{14.40pt}{0.75pt}}
+
+\put(387.80,25){\rule{14.40pt}{1.50pt}}
+
+\put(40,172){\makebox(0,0)[l]{\scriptsize Uniform Random}}}
+
+\end{picture}}\end{center}
+
+Horizontal axis: tour distance / minimum distance on the same matrix. Vertical axis: probability density, matching density=True in the supplied script.
+
         \item (5 pts) Write three functions to generate candidate solutions.
         \begin{itemize}
             \item \verb|swapPairs(path, numSwaps, adj)| swaps \verb|numSwaps| random pairs of elements in \verb|path|. If \verb|adj| is \verb|True|, only swap adjacent pairs of elements in the current path.
@@ -56,20 +341,2493 @@
             \item \verb|reverseRange(path)| reverses a slice of \verb|path| between two randomly selected indices.
         \end{itemize}
         Include code snippets of these functions in your PDF submission.
+
+\paragraph{Answer.}
+
+Each function copies its input and preserves the route's city multiset. For adjacent swaps I use consecutive list indices, without wrapping the last index to the first. The range functions choose distinct endpoints and include both endpoints. Paths with fewer than two cities return a copy unchanged.
+
+\begin{lstlisting}
+def swapPairs(path, numSwaps=1, adj=False):
+  candidate = path[:] #we do not want to change the given path
+  n = len(candidate)
+  if n < 2:
+    return candidate
+  for _ in range(numSwaps):
+    if adj:
+      a = int(np.random.randint(n - 1))
+      b = a + 1
+    else:
+      a, b = np.random.choice(n, size=2, replace=False)
+    candidate[a], candidate[b] = candidate[b], candidate[a]
+  return candidate
+\end{lstlisting}
+
+\begin{lstlisting}
+def permuteRange(path):
+  candidate = path[:] #we do not want to change the given path
+  if len(candidate) < 2:
+    return candidate
+  a, b = sorted(np.random.choice(len(candidate), size=2, replace=False))
+  candidate[a:b + 1] = np.random.permutation(candidate[a:b + 1]).tolist()
+  return candidate
+\end{lstlisting}
+
+\begin{lstlisting}
+def reverseRange(path):
+  candidate = path[:] #we do not want to change the given path
+  if len(candidate) < 2:
+    return candidate
+  a, b = sorted(np.random.choice(len(candidate), size=2, replace=False))
+  candidate[a:b + 1] = candidate[a:b + 1][::-1]
+  return candidate
+\end{lstlisting}
+
+A random permutation may return the original slice; multiple swaps may undo one another. Such proposals remain valid. With a fixed number of swaps, all three functions take O(n) time because they copy the route. NumPy choice without replacement may construct a permutation of the population, so a conservative bound for swapPairs is O(n*(1+numSwaps)) in general. Each uses O(n) auxiliary space.
+
         \item (10 pts) Write a function \verb|runSimulatedAnnealing(D, genCandidate, maxIterations, T, alpha)| which finds a path for a traveling salesman using simulated annealing given a distance matrix \verb|D|, a function to generate candidate solutions, a maximum number of iterations to perform, an initial temperature, and a multiplicative update factor for temperature. The initial path should be a random permutation of the cities. Include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function with respect to $n$ (the number of cities) and $i$ (the number of iterations)?
+
+\paragraph{Answer.}
+
+Initialize with a random permutation. Always accept a candidate of equal or lower distance. Accept an uphill change of size delta with probability exp(-delta/T) when T is positive. Multiply T by alpha after each iteration. Keep the best-ever tour separately from the current tour; uphill moves may worsen the current tour. At T=0 only non-increasing moves are accepted. distList records the current distance after each iteration, and has exactly maxIterations entries.
+
+\begin{lstlisting}
+def runSimulatedAnnealing(D, genCandidate=swapPairs, maxIterations=1000, T=-1, alpha=0.9):
+  if T==-1: T = np.sqrt(len(D)) #default starting temperature
+  T = float(T)
+  curPath = np.random.permutation(len(D)).tolist() #a random initial path
+  curDist = totalDistance(D, curPath)
+  bestPath, bestDist = curPath[:], curDist
+  distList = []
+  for _ in range(maxIterations):
+    candidate = genCandidate(curPath[:])
+    candidateDist = totalDistance(D, candidate)
+    delta = candidateDist - curDist
+    if delta <= 0 or (T > 0 and np.random.random() < np.exp(-delta / T)):
+      curPath, curDist = list(candidate), candidateDist
+      if curDist < bestDist:
+        bestPath, bestDist = curPath[:], curDist
+    distList.append(curDist)
+    T *= alpha
+  return bestPath, bestDist, distList
+\end{lstlisting}
+
+For the provided candidate functions, candidate construction, tour scoring, and any route copy each take O(n) time. Thus i iterations take O(n + i*n), or O((i+1)*n), for n at least 1. Including degenerate empty inputs gives O((i+1)*(n+1)). Auxiliary space is O(n+i), including the returned distance history. With a general generator taking G(n) time, the bound becomes O(n + i*(n+G(n))).
+
         \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate plots showing how the total distance of the current solution changes over time. Discuss the results and briefly describe a process for tuning the hyperparameters of this approach.
+
+\paragraph{Answer.}
+
+For each family the supplied script generates one 100-city matrix and runs each candidate function for 10,000 iterations on that same matrix. Each run has its own random initial tour, T=10, and alpha=0.9. These are single runs per combination, so the comparison is descriptive and is confounded by different initial tours.
+
+\begin{center}\begin{tabular}{llll}
+
+Family & Generator & Initial & Best / final \\ Barabasi-Albert & swapPairs & 239.000 & 132.000 \\ Barabasi-Albert & permuteRange & 233.000 & 175.000 \\ Barabasi-Albert & reverseRange & 236.000 & 112.000 \\ Watts-Strogatz & swapPairs & 494.000 & 176.000 \\ Watts-Strogatz & permuteRange & 499.000 & 274.000 \\ Watts-Strogatz & reverseRange & 529.000 & 121.000 \\ Uniform Random & swapPairs & 52.781 & 10.147 \\ Uniform Random & permuteRange & 51.351 & 19.597 \\ Uniform Random & reverseRange & 49.458 & 23.863 \\ 
+
+\end{tabular}\end{center}
+
+All runs improve substantially and end at their best recorded distances in this experiment. Reversal performs best on the two symmetric graph-distance instances (112 and 121), while pair swaps perform best on the asymmetric uniform instance (10.147). In a symmetric matrix, reversing a segment preserves its internal edge costs and changes just the boundary edges, resembling a 2-opt move. In an asymmetric matrix, reversal also reverses all its internal arcs and can be much more disruptive. Large random permutations often disturb many good edges.
+
+The plotted current distance can rise during early uphill acceptances, but settles into a mostly decreasing staircase as cooling proceeds. The default cools rapidly: T after 100 updates is about 0.000266, and after 200 about 0.00000000706. Almost all the 10,000 iterations therefore behave like greedy local improvement. A late plateau indicates that accepted improvements are rare under this schedule; it does not certify optimality.
+
+To tune, first sample positive candidate distance changes and choose T0 near -delta\_typical / log(p0), for example p0=0.8. Choose a final temperature and set $\alpha=(T_{\mathrm{final}}/T_0)^{1/i}$ so cooling spans the actual iteration budget. Compare multiple candidate operators, temperatures, schedules, and restart counts using equal evaluation budgets and repeated paired seeds on the same matrices and initial tours. Compare the distribution of best distances and runtime, then evaluate the chosen setting on fresh instances. Slower cooling may help escape local minima but is not guaranteed to improve every run.
+
+
+\begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
+
+\put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
+
+\put(0,25.00){\makebox(30,0)[r]{\scriptsize 100.80}}
+
+\put(0,66.67){\makebox(30,0)[r]{\scriptsize 152.60}}
+
+\put(0,108.33){\makebox(30,0)[r]{\scriptsize 204.40}}
+
+\put(0,150.00){\makebox(30,0)[r]{\scriptsize 256.20}}
+
+\put(35.00,13){\makebox(0,0){\scriptsize 1.00}}
+
+\put(155.00,13){\makebox(0,0){\scriptsize 3334.00}}
+
+\put(275.00,13){\makebox(0,0){\scriptsize 6667.00}}
+
+\put(395.00,13){\makebox(0,0){\scriptsize 10000.00}}
+
+{\color{blue}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,136.16) -- (35.07,136.97);
+\draw (35.07,136.97) -- (35.14,136.16);
+\draw (35.14,136.16) -- (35.22,133.75);
+\draw (35.22,133.75) -- (35.29,134.56);
+\draw (35.29,134.56) -- (35.36,132.95);
+\draw (35.36,132.95) -- (35.43,132.95);
+\draw (35.43,132.95) -- (35.50,135.36);
+\draw (35.50,135.36) -- (35.58,135.36);
+\draw (35.58,135.36) -- (35.65,136.16);
+\draw (35.65,136.16) -- (35.72,134.56);
+\draw (35.72,134.56) -- (35.79,134.56);
+\draw (35.79,134.56) -- (35.86,134.56);
+\draw (35.86,134.56) -- (35.94,134.56);
+\draw (35.94,134.56) -- (36.01,133.75);
+\draw (36.01,133.75) -- (36.08,132.95);
+\draw (36.08,132.95) -- (36.15,132.95);
+\draw (36.15,132.95) -- (36.22,132.14);
+\draw (36.22,132.14) -- (36.30,130.53);
+\draw (36.30,130.53) -- (36.37,130.53);
+\draw (36.37,130.53) -- (36.44,128.12);
+\draw (36.44,128.12) -- (36.51,128.12);
+\draw (36.51,128.12) -- (36.58,126.51);
+\draw (36.58,126.51) -- (36.66,124.90);
+\draw (36.66,124.90) -- (36.73,124.90);
+\draw (36.73,124.90) -- (36.80,122.49);
+\draw (36.80,122.49) -- (36.87,121.69);
+\draw (36.87,121.69) -- (36.94,117.66);
+\draw (36.94,117.66) -- (37.02,117.66);
+\draw (37.02,117.66) -- (37.09,117.66);
+\draw (37.09,117.66) -- (37.16,117.66);
+\draw (37.16,117.66) -- (37.23,116.86);
+\draw (37.23,116.86) -- (37.30,116.06);
+\draw (37.30,116.06) -- (37.38,116.06);
+\draw (37.38,116.06) -- (37.45,116.06);
+\draw (37.45,116.06) -- (37.52,116.06);
+\draw (37.52,116.06) -- (37.59,116.06);
+\draw (37.59,116.06) -- (37.66,115.25);
+\draw (37.66,115.25) -- (37.74,115.25);
+\draw (37.74,115.25) -- (37.81,115.25);
+\draw (37.81,115.25) -- (37.88,115.25);
+\draw (37.88,115.25) -- (37.95,114.45);
+\draw (37.95,114.45) -- (38.02,114.45);
+\draw (38.02,114.45) -- (38.10,114.45);
+\draw (38.10,114.45) -- (38.17,113.64);
+\draw (38.17,113.64) -- (38.24,113.64);
+\draw (38.24,113.64) -- (38.31,113.64);
+\draw (38.31,113.64) -- (38.38,113.64);
+\draw (38.38,113.64) -- (38.46,113.64);
+\draw (38.46,113.64) -- (38.53,113.64);
+\draw (38.53,113.64) -- (38.60,113.64);
+\draw (38.60,113.64) -- (40.40,107.21);
+\draw (40.40,107.21) -- (42.20,103.19);
+\draw (42.20,103.19) -- (44.00,98.36);
+\draw (44.00,98.36) -- (45.80,95.14);
+\draw (45.80,95.14) -- (47.60,91.92);
+\draw (47.60,91.92) -- (49.40,89.51);
+\draw (49.40,89.51) -- (51.20,89.51);
+\draw (51.20,89.51) -- (53.00,89.51);
+\draw (53.00,89.51) -- (54.80,87.10);
+\draw (54.80,87.10) -- (56.60,87.10);
+\draw (56.60,87.10) -- (58.40,85.49);
+\draw (58.40,85.49) -- (60.20,83.08);
+\draw (60.20,83.08) -- (62.00,83.08);
+\draw (62.00,83.08) -- (63.80,82.27);
+\draw (63.80,82.27) -- (65.60,82.27);
+\draw (65.60,82.27) -- (67.40,82.27);
+\draw (67.40,82.27) -- (69.20,82.27);
+\draw (69.20,82.27) -- (71.00,80.66);
+\draw (71.00,80.66) -- (72.80,78.25);
+\draw (72.80,78.25) -- (74.60,75.03);
+\draw (74.60,75.03) -- (76.40,74.23);
+\draw (76.40,74.23) -- (78.20,73.42);
+\draw (78.20,73.42) -- (80.00,72.62);
+\draw (80.00,72.62) -- (81.80,71.81);
+\draw (81.80,71.81) -- (83.60,71.81);
+\draw (83.60,71.81) -- (85.41,71.81);
+\draw (85.41,71.81) -- (87.21,71.81);
+\draw (87.21,71.81) -- (89.01,71.81);
+\draw (89.01,71.81) -- (90.81,70.21);
+\draw (90.81,70.21) -- (92.61,70.21);
+\draw (92.61,70.21) -- (94.41,68.60);
+\draw (94.41,68.60) -- (96.21,68.60);
+\draw (96.21,68.60) -- (98.01,66.99);
+\draw (98.01,66.99) -- (99.81,65.38);
+\draw (99.81,65.38) -- (101.61,65.38);
+\draw (101.61,65.38) -- (103.41,65.38);
+\draw (103.41,65.38) -- (105.21,65.38);
+\draw (105.21,65.38) -- (107.01,64.58);
+\draw (107.01,64.58) -- (108.81,64.58);
+\draw (108.81,64.58) -- (110.61,64.58);
+\draw (110.61,64.58) -- (112.41,64.58);
+\draw (112.41,64.58) -- (114.21,64.58);
+\draw (114.21,64.58) -- (116.01,64.58);
+\draw (116.01,64.58) -- (117.81,64.58);
+\draw (117.81,64.58) -- (119.61,64.58);
+\draw (119.61,64.58) -- (121.41,64.58);
+\draw (121.41,64.58) -- (123.21,63.77);
+\draw (123.21,63.77) -- (125.01,63.77);
+\draw (125.01,63.77) -- (126.81,63.77);
+\draw (126.81,63.77) -- (128.61,63.77);
+\draw (128.61,63.77) -- (130.41,63.77);
+\draw (130.41,63.77) -- (132.21,63.77);
+\draw (132.21,63.77) -- (134.01,63.77);
+\draw (134.01,63.77) -- (135.81,63.77);
+\draw (135.81,63.77) -- (137.61,63.77);
+\draw (137.61,63.77) -- (139.41,63.77);
+\draw (139.41,63.77) -- (141.21,63.77);
+\draw (141.21,63.77) -- (143.01,62.97);
+\draw (143.01,62.97) -- (144.81,62.97);
+\draw (144.81,62.97) -- (146.61,62.97);
+\draw (146.61,62.97) -- (148.41,62.97);
+\draw (148.41,62.97) -- (150.21,62.97);
+\draw (150.21,62.97) -- (152.01,62.97);
+\draw (152.01,62.97) -- (153.81,62.16);
+\draw (153.81,62.16) -- (155.61,62.16);
+\draw (155.61,62.16) -- (157.41,62.16);
+\draw (157.41,62.16) -- (159.21,62.16);
+\draw (159.21,62.16) -- (161.01,61.36);
+\draw (161.01,61.36) -- (162.81,61.36);
+\draw (162.81,61.36) -- (164.61,61.36);
+\draw (164.61,61.36) -- (166.41,61.36);
+\draw (166.41,61.36) -- (168.21,61.36);
+\draw (168.21,61.36) -- (170.01,61.36);
+\draw (170.01,61.36) -- (171.81,61.36);
+\draw (171.81,61.36) -- (173.61,61.36);
+\draw (173.61,61.36) -- (175.41,59.75);
+\draw (175.41,59.75) -- (177.21,59.75);
+\draw (177.21,59.75) -- (179.01,59.75);
+\draw (179.01,59.75) -- (180.81,59.75);
+\draw (180.81,59.75) -- (182.61,59.75);
+\draw (182.61,59.75) -- (184.41,59.75);
+\draw (184.41,59.75) -- (186.22,59.75);
+\draw (186.22,59.75) -- (188.02,59.75);
+\draw (188.02,59.75) -- (189.82,59.75);
+\draw (189.82,59.75) -- (191.62,59.75);
+\draw (191.62,59.75) -- (193.42,59.75);
+\draw (193.42,59.75) -- (195.22,59.75);
+\draw (195.22,59.75) -- (197.02,59.75);
+\draw (197.02,59.75) -- (198.82,59.75);
+\draw (198.82,59.75) -- (200.62,58.94);
+\draw (200.62,58.94) -- (202.42,58.94);
+\draw (202.42,58.94) -- (204.22,58.94);
+\draw (204.22,58.94) -- (206.02,58.94);
+\draw (206.02,58.94) -- (207.82,58.94);
+\draw (207.82,58.94) -- (209.62,58.94);
+\draw (209.62,58.94) -- (211.42,58.94);
+\draw (211.42,58.94) -- (213.22,58.94);
+\draw (213.22,58.94) -- (215.02,58.94);
+\draw (215.02,58.94) -- (216.82,58.94);
+\draw (216.82,58.94) -- (218.62,58.94);
+\draw (218.62,58.94) -- (220.42,58.94);
+\draw (220.42,58.94) -- (222.22,58.94);
+\draw (222.22,58.94) -- (224.02,58.94);
+\draw (224.02,58.94) -- (225.82,58.94);
+\draw (225.82,58.94) -- (227.62,58.94);
+\draw (227.62,58.94) -- (229.42,58.94);
+\draw (229.42,58.94) -- (231.22,58.94);
+\draw (231.22,58.94) -- (233.02,58.94);
+\draw (233.02,58.94) -- (234.82,58.94);
+\draw (234.82,58.94) -- (236.62,58.94);
+\draw (236.62,58.94) -- (238.42,58.94);
+\draw (238.42,58.94) -- (240.22,58.14);
+\draw (240.22,58.14) -- (242.02,58.14);
+\draw (242.02,58.14) -- (243.82,58.14);
+\draw (243.82,58.14) -- (245.62,57.34);
+\draw (245.62,57.34) -- (247.42,56.53);
+\draw (247.42,56.53) -- (249.22,55.73);
+\draw (249.22,55.73) -- (251.02,55.73);
+\draw (251.02,55.73) -- (252.82,55.73);
+\draw (252.82,55.73) -- (254.62,55.73);
+\draw (254.62,55.73) -- (256.42,55.73);
+\draw (256.42,55.73) -- (258.22,55.73);
+\draw (258.22,55.73) -- (260.02,55.73);
+\draw (260.02,55.73) -- (261.82,55.73);
+\draw (261.82,55.73) -- (263.62,55.73);
+\draw (263.62,55.73) -- (265.42,54.92);
+\draw (265.42,54.92) -- (267.22,54.92);
+\draw (267.22,54.92) -- (269.02,54.92);
+\draw (269.02,54.92) -- (270.82,54.92);
+\draw (270.82,54.92) -- (272.62,54.92);
+\draw (272.62,54.92) -- (274.42,54.92);
+\draw (274.42,54.92) -- (276.22,54.92);
+\draw (276.22,54.92) -- (278.02,54.92);
+\draw (278.02,54.92) -- (279.82,54.12);
+\draw (279.82,54.12) -- (281.62,54.12);
+\draw (281.62,54.12) -- (283.42,54.12);
+\draw (283.42,54.12) -- (285.23,53.31);
+\draw (285.23,53.31) -- (287.03,53.31);
+\draw (287.03,53.31) -- (288.83,53.31);
+\draw (288.83,53.31) -- (290.63,53.31);
+\draw (290.63,53.31) -- (292.43,53.31);
+\draw (292.43,53.31) -- (294.23,53.31);
+\draw (294.23,53.31) -- (296.03,53.31);
+\draw (296.03,53.31) -- (297.83,53.31);
+\draw (297.83,53.31) -- (299.63,53.31);
+\draw (299.63,53.31) -- (301.43,53.31);
+\draw (301.43,53.31) -- (303.23,52.51);
+\draw (303.23,52.51) -- (305.03,52.51);
+\draw (305.03,52.51) -- (306.83,52.51);
+\draw (306.83,52.51) -- (308.63,52.51);
+\draw (308.63,52.51) -- (310.43,52.51);
+\draw (310.43,52.51) -- (312.23,52.51);
+\draw (312.23,52.51) -- (314.03,52.51);
+\draw (314.03,52.51) -- (315.83,52.51);
+\draw (315.83,52.51) -- (317.63,52.51);
+\draw (317.63,52.51) -- (319.43,52.51);
+\draw (319.43,52.51) -- (321.23,52.51);
+\draw (321.23,52.51) -- (323.03,52.51);
+\draw (323.03,52.51) -- (324.83,52.51);
+\draw (324.83,52.51) -- (326.63,52.51);
+\draw (326.63,52.51) -- (328.43,52.51);
+\draw (328.43,52.51) -- (330.23,52.51);
+\draw (330.23,52.51) -- (332.03,50.90);
+\draw (332.03,50.90) -- (333.83,50.90);
+\draw (333.83,50.90) -- (335.63,50.90);
+\draw (335.63,50.90) -- (337.43,50.90);
+\draw (337.43,50.90) -- (339.23,50.90);
+\draw (339.23,50.90) -- (341.03,50.90);
+\draw (341.03,50.90) -- (342.83,50.90);
+\draw (342.83,50.90) -- (344.63,50.90);
+\draw (344.63,50.90) -- (346.43,50.90);
+\draw (346.43,50.90) -- (348.23,50.90);
+\draw (348.23,50.90) -- (350.03,50.90);
+\draw (350.03,50.90) -- (351.83,50.90);
+\draw (351.83,50.90) -- (353.63,50.90);
+\draw (353.63,50.90) -- (355.43,50.90);
+\draw (355.43,50.90) -- (357.23,50.90);
+\draw (357.23,50.90) -- (359.03,50.90);
+\draw (359.03,50.90) -- (360.83,50.90);
+\draw (360.83,50.90) -- (362.63,50.90);
+\draw (362.63,50.90) -- (364.43,50.90);
+\draw (364.43,50.90) -- (366.23,50.90);
+\draw (366.23,50.90) -- (368.03,50.90);
+\draw (368.03,50.90) -- (369.83,50.90);
+\draw (369.83,50.90) -- (371.63,50.90);
+\draw (371.63,50.90) -- (373.43,50.90);
+\draw (373.43,50.90) -- (375.23,50.90);
+\draw (375.23,50.90) -- (377.03,50.90);
+\draw (377.03,50.90) -- (378.83,50.90);
+\draw (378.83,50.90) -- (380.63,50.90);
+\draw (380.63,50.90) -- (382.43,50.90);
+\draw (382.43,50.90) -- (384.23,50.90);
+\draw (384.23,50.90) -- (386.04,50.90);
+\draw (386.04,50.90) -- (387.84,50.90);
+\draw (387.84,50.90) -- (389.64,50.90);
+\draw (389.64,50.90) -- (391.44,50.90);
+\draw (391.44,50.90) -- (393.24,50.10);
+\draw (393.24,50.10) -- (395.00,50.10);
+\end{tikzpicture}}
+\put(40,172){\makebox(0,0)[l]{\scriptsize swapPairs}}}
+
+{\color{red}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,136.16) -- (35.07,140.19);
+\draw (35.07,140.19) -- (35.14,134.56);
+\draw (35.14,134.56) -- (35.22,133.75);
+\draw (35.22,133.75) -- (35.29,129.73);
+\draw (35.29,129.73) -- (35.36,131.34);
+\draw (35.36,131.34) -- (35.43,132.14);
+\draw (35.43,132.14) -- (35.50,133.75);
+\draw (35.50,133.75) -- (35.58,132.95);
+\draw (35.58,132.95) -- (35.65,133.75);
+\draw (35.65,133.75) -- (35.72,132.95);
+\draw (35.72,132.95) -- (35.79,132.95);
+\draw (35.79,132.95) -- (35.86,131.34);
+\draw (35.86,131.34) -- (35.94,128.93);
+\draw (35.94,128.93) -- (36.01,128.93);
+\draw (36.01,128.93) -- (36.08,128.93);
+\draw (36.08,128.93) -- (36.15,127.32);
+\draw (36.15,127.32) -- (36.22,127.32);
+\draw (36.22,127.32) -- (36.30,126.51);
+\draw (36.30,126.51) -- (36.37,125.71);
+\draw (36.37,125.71) -- (36.44,125.71);
+\draw (36.44,125.71) -- (36.51,125.71);
+\draw (36.51,125.71) -- (36.58,125.71);
+\draw (36.58,125.71) -- (36.66,125.71);
+\draw (36.66,125.71) -- (36.73,124.90);
+\draw (36.73,124.90) -- (36.80,124.90);
+\draw (36.80,124.90) -- (36.87,124.90);
+\draw (36.87,124.90) -- (36.94,124.90);
+\draw (36.94,124.90) -- (37.02,124.90);
+\draw (37.02,124.90) -- (37.09,124.90);
+\draw (37.09,124.90) -- (37.16,124.90);
+\draw (37.16,124.90) -- (37.23,124.90);
+\draw (37.23,124.90) -- (37.30,124.10);
+\draw (37.30,124.10) -- (37.38,124.10);
+\draw (37.38,124.10) -- (37.45,124.10);
+\draw (37.45,124.10) -- (37.52,124.10);
+\draw (37.52,124.10) -- (37.59,124.10);
+\draw (37.59,124.10) -- (37.66,124.10);
+\draw (37.66,124.10) -- (37.74,120.88);
+\draw (37.74,120.88) -- (37.81,120.88);
+\draw (37.81,120.88) -- (37.88,120.88);
+\draw (37.88,120.88) -- (37.95,120.88);
+\draw (37.95,120.88) -- (38.02,120.88);
+\draw (38.02,120.88) -- (38.10,120.88);
+\draw (38.10,120.88) -- (38.17,120.88);
+\draw (38.17,120.88) -- (38.24,120.88);
+\draw (38.24,120.88) -- (38.31,120.88);
+\draw (38.31,120.88) -- (38.38,120.88);
+\draw (38.38,120.88) -- (38.46,120.88);
+\draw (38.46,120.88) -- (38.53,120.88);
+\draw (38.53,120.88) -- (38.60,120.08);
+\draw (38.60,120.08) -- (40.40,120.08);
+\draw (40.40,120.08) -- (42.20,112.84);
+\draw (42.20,112.84) -- (44.00,111.23);
+\draw (44.00,111.23) -- (45.80,111.23);
+\draw (45.80,111.23) -- (47.60,110.42);
+\draw (47.60,110.42) -- (49.40,108.82);
+\draw (49.40,108.82) -- (51.20,103.19);
+\draw (51.20,103.19) -- (53.00,102.38);
+\draw (53.00,102.38) -- (54.80,102.38);
+\draw (54.80,102.38) -- (56.60,102.38);
+\draw (56.60,102.38) -- (58.40,102.38);
+\draw (58.40,102.38) -- (60.20,102.38);
+\draw (60.20,102.38) -- (62.00,101.58);
+\draw (62.00,101.58) -- (63.80,101.58);
+\draw (63.80,101.58) -- (65.60,99.97);
+\draw (65.60,99.97) -- (67.40,99.97);
+\draw (67.40,99.97) -- (69.20,99.16);
+\draw (69.20,99.16) -- (71.00,99.16);
+\draw (71.00,99.16) -- (72.80,97.55);
+\draw (72.80,97.55) -- (74.60,97.55);
+\draw (74.60,97.55) -- (76.40,97.55);
+\draw (76.40,97.55) -- (78.20,97.55);
+\draw (78.20,97.55) -- (80.00,97.55);
+\draw (80.00,97.55) -- (81.80,97.55);
+\draw (81.80,97.55) -- (83.60,97.55);
+\draw (83.60,97.55) -- (85.41,97.55);
+\draw (85.41,97.55) -- (87.21,97.55);
+\draw (87.21,97.55) -- (89.01,96.75);
+\draw (89.01,96.75) -- (90.81,96.75);
+\draw (90.81,96.75) -- (92.61,96.75);
+\draw (92.61,96.75) -- (94.41,96.75);
+\draw (94.41,96.75) -- (96.21,96.75);
+\draw (96.21,96.75) -- (98.01,96.75);
+\draw (98.01,96.75) -- (99.81,96.75);
+\draw (99.81,96.75) -- (101.61,95.95);
+\draw (101.61,95.95) -- (103.41,95.95);
+\draw (103.41,95.95) -- (105.21,95.95);
+\draw (105.21,95.95) -- (107.01,95.14);
+\draw (107.01,95.14) -- (108.81,95.14);
+\draw (108.81,95.14) -- (110.61,95.14);
+\draw (110.61,95.14) -- (112.41,94.34);
+\draw (112.41,94.34) -- (114.21,94.34);
+\draw (114.21,94.34) -- (116.01,93.53);
+\draw (116.01,93.53) -- (117.81,93.53);
+\draw (117.81,93.53) -- (119.61,93.53);
+\draw (119.61,93.53) -- (121.41,93.53);
+\draw (121.41,93.53) -- (123.21,93.53);
+\draw (123.21,93.53) -- (125.01,93.53);
+\draw (125.01,93.53) -- (126.81,93.53);
+\draw (126.81,93.53) -- (128.61,93.53);
+\draw (128.61,93.53) -- (130.41,93.53);
+\draw (130.41,93.53) -- (132.21,93.53);
+\draw (132.21,93.53) -- (134.01,93.53);
+\draw (134.01,93.53) -- (135.81,93.53);
+\draw (135.81,93.53) -- (137.61,93.53);
+\draw (137.61,93.53) -- (139.41,93.53);
+\draw (139.41,93.53) -- (141.21,93.53);
+\draw (141.21,93.53) -- (143.01,93.53);
+\draw (143.01,93.53) -- (144.81,93.53);
+\draw (144.81,93.53) -- (146.61,93.53);
+\draw (146.61,93.53) -- (148.41,93.53);
+\draw (148.41,93.53) -- (150.21,93.53);
+\draw (150.21,93.53) -- (152.01,93.53);
+\draw (152.01,93.53) -- (153.81,93.53);
+\draw (153.81,93.53) -- (155.61,93.53);
+\draw (155.61,93.53) -- (157.41,92.73);
+\draw (157.41,92.73) -- (159.21,92.73);
+\draw (159.21,92.73) -- (161.01,91.92);
+\draw (161.01,91.92) -- (162.81,91.92);
+\draw (162.81,91.92) -- (164.61,91.92);
+\draw (164.61,91.92) -- (166.41,91.92);
+\draw (166.41,91.92) -- (168.21,91.92);
+\draw (168.21,91.92) -- (170.01,91.92);
+\draw (170.01,91.92) -- (171.81,91.92);
+\draw (171.81,91.92) -- (173.61,91.92);
+\draw (173.61,91.92) -- (175.41,91.92);
+\draw (175.41,91.92) -- (177.21,91.92);
+\draw (177.21,91.92) -- (179.01,91.92);
+\draw (179.01,91.92) -- (180.81,91.92);
+\draw (180.81,91.92) -- (182.61,91.92);
+\draw (182.61,91.92) -- (184.41,91.92);
+\draw (184.41,91.92) -- (186.22,91.92);
+\draw (186.22,91.92) -- (188.02,91.92);
+\draw (188.02,91.92) -- (189.82,91.92);
+\draw (189.82,91.92) -- (191.62,91.92);
+\draw (191.62,91.92) -- (193.42,91.92);
+\draw (193.42,91.92) -- (195.22,91.12);
+\draw (195.22,91.12) -- (197.02,91.12);
+\draw (197.02,91.12) -- (198.82,91.12);
+\draw (198.82,91.12) -- (200.62,91.12);
+\draw (200.62,91.12) -- (202.42,91.12);
+\draw (202.42,91.12) -- (204.22,91.12);
+\draw (204.22,91.12) -- (206.02,91.12);
+\draw (206.02,91.12) -- (207.82,91.12);
+\draw (207.82,91.12) -- (209.62,91.12);
+\draw (209.62,91.12) -- (211.42,91.12);
+\draw (211.42,91.12) -- (213.22,91.12);
+\draw (213.22,91.12) -- (215.02,91.12);
+\draw (215.02,91.12) -- (216.82,91.12);
+\draw (216.82,91.12) -- (218.62,91.12);
+\draw (218.62,91.12) -- (220.42,91.12);
+\draw (220.42,91.12) -- (222.22,91.12);
+\draw (222.22,91.12) -- (224.02,91.12);
+\draw (224.02,91.12) -- (225.82,91.12);
+\draw (225.82,91.12) -- (227.62,91.12);
+\draw (227.62,91.12) -- (229.42,91.12);
+\draw (229.42,91.12) -- (231.22,91.12);
+\draw (231.22,91.12) -- (233.02,91.12);
+\draw (233.02,91.12) -- (234.82,90.32);
+\draw (234.82,90.32) -- (236.62,90.32);
+\draw (236.62,90.32) -- (238.42,89.51);
+\draw (238.42,89.51) -- (240.22,89.51);
+\draw (240.22,89.51) -- (242.02,89.51);
+\draw (242.02,89.51) -- (243.82,89.51);
+\draw (243.82,89.51) -- (245.62,89.51);
+\draw (245.62,89.51) -- (247.42,89.51);
+\draw (247.42,89.51) -- (249.22,89.51);
+\draw (249.22,89.51) -- (251.02,89.51);
+\draw (251.02,89.51) -- (252.82,89.51);
+\draw (252.82,89.51) -- (254.62,89.51);
+\draw (254.62,89.51) -- (256.42,89.51);
+\draw (256.42,89.51) -- (258.22,89.51);
+\draw (258.22,89.51) -- (260.02,89.51);
+\draw (260.02,89.51) -- (261.82,89.51);
+\draw (261.82,89.51) -- (263.62,89.51);
+\draw (263.62,89.51) -- (265.42,89.51);
+\draw (265.42,89.51) -- (267.22,89.51);
+\draw (267.22,89.51) -- (269.02,88.71);
+\draw (269.02,88.71) -- (270.82,88.71);
+\draw (270.82,88.71) -- (272.62,88.71);
+\draw (272.62,88.71) -- (274.42,88.71);
+\draw (274.42,88.71) -- (276.22,88.71);
+\draw (276.22,88.71) -- (278.02,88.71);
+\draw (278.02,88.71) -- (279.82,88.71);
+\draw (279.82,88.71) -- (281.62,88.71);
+\draw (281.62,88.71) -- (283.42,88.71);
+\draw (283.42,88.71) -- (285.23,87.90);
+\draw (285.23,87.90) -- (287.03,87.90);
+\draw (287.03,87.90) -- (288.83,87.90);
+\draw (288.83,87.90) -- (290.63,87.90);
+\draw (290.63,87.90) -- (292.43,87.90);
+\draw (292.43,87.90) -- (294.23,87.90);
+\draw (294.23,87.90) -- (296.03,87.90);
+\draw (296.03,87.90) -- (297.83,87.90);
+\draw (297.83,87.90) -- (299.63,87.90);
+\draw (299.63,87.90) -- (301.43,87.90);
+\draw (301.43,87.90) -- (303.23,87.90);
+\draw (303.23,87.90) -- (305.03,87.90);
+\draw (305.03,87.90) -- (306.83,87.90);
+\draw (306.83,87.90) -- (308.63,87.90);
+\draw (308.63,87.90) -- (310.43,87.90);
+\draw (310.43,87.90) -- (312.23,87.90);
+\draw (312.23,87.90) -- (314.03,87.90);
+\draw (314.03,87.90) -- (315.83,87.90);
+\draw (315.83,87.90) -- (317.63,85.49);
+\draw (317.63,85.49) -- (319.43,85.49);
+\draw (319.43,85.49) -- (321.23,85.49);
+\draw (321.23,85.49) -- (323.03,85.49);
+\draw (323.03,85.49) -- (324.83,85.49);
+\draw (324.83,85.49) -- (326.63,85.49);
+\draw (326.63,85.49) -- (328.43,85.49);
+\draw (328.43,85.49) -- (330.23,85.49);
+\draw (330.23,85.49) -- (332.03,85.49);
+\draw (332.03,85.49) -- (333.83,85.49);
+\draw (333.83,85.49) -- (335.63,85.49);
+\draw (335.63,85.49) -- (337.43,85.49);
+\draw (337.43,85.49) -- (339.23,85.49);
+\draw (339.23,85.49) -- (341.03,85.49);
+\draw (341.03,85.49) -- (342.83,85.49);
+\draw (342.83,85.49) -- (344.63,85.49);
+\draw (344.63,85.49) -- (346.43,85.49);
+\draw (346.43,85.49) -- (348.23,85.49);
+\draw (348.23,85.49) -- (350.03,85.49);
+\draw (350.03,85.49) -- (351.83,85.49);
+\draw (351.83,85.49) -- (353.63,85.49);
+\draw (353.63,85.49) -- (355.43,85.49);
+\draw (355.43,85.49) -- (357.23,85.49);
+\draw (357.23,85.49) -- (359.03,85.49);
+\draw (359.03,85.49) -- (360.83,85.49);
+\draw (360.83,85.49) -- (362.63,85.49);
+\draw (362.63,85.49) -- (364.43,85.49);
+\draw (364.43,85.49) -- (366.23,85.49);
+\draw (366.23,85.49) -- (368.03,85.49);
+\draw (368.03,85.49) -- (369.83,85.49);
+\draw (369.83,85.49) -- (371.63,85.49);
+\draw (371.63,85.49) -- (373.43,85.49);
+\draw (373.43,85.49) -- (375.23,84.68);
+\draw (375.23,84.68) -- (377.03,84.68);
+\draw (377.03,84.68) -- (378.83,84.68);
+\draw (378.83,84.68) -- (380.63,84.68);
+\draw (380.63,84.68) -- (382.43,84.68);
+\draw (382.43,84.68) -- (384.23,84.68);
+\draw (384.23,84.68) -- (386.04,84.68);
+\draw (386.04,84.68) -- (387.84,84.68);
+\draw (387.84,84.68) -- (389.64,84.68);
+\draw (389.64,84.68) -- (391.44,84.68);
+\draw (391.44,84.68) -- (393.24,84.68);
+\draw (393.24,84.68) -- (395.00,84.68);
+\end{tikzpicture}}
+\put(165,172){\makebox(0,0)[l]{\scriptsize permuteRange}}}
+
+{\color{black}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,135.36) -- (35.07,136.16);
+\draw (35.07,136.16) -- (35.14,134.56);
+\draw (35.14,134.56) -- (35.22,137.77);
+\draw (35.22,137.77) -- (35.29,136.97);
+\draw (35.29,136.97) -- (35.36,137.77);
+\draw (35.36,137.77) -- (35.43,136.16);
+\draw (35.43,136.16) -- (35.50,135.36);
+\draw (35.50,135.36) -- (35.58,136.16);
+\draw (35.58,136.16) -- (35.65,136.16);
+\draw (35.65,136.16) -- (35.72,136.16);
+\draw (35.72,136.16) -- (35.79,135.36);
+\draw (35.79,135.36) -- (35.86,135.36);
+\draw (35.86,135.36) -- (35.94,135.36);
+\draw (35.94,135.36) -- (36.01,135.36);
+\draw (36.01,135.36) -- (36.08,133.75);
+\draw (36.08,133.75) -- (36.15,132.95);
+\draw (36.15,132.95) -- (36.22,130.53);
+\draw (36.22,130.53) -- (36.30,130.53);
+\draw (36.30,130.53) -- (36.37,130.53);
+\draw (36.37,130.53) -- (36.44,128.93);
+\draw (36.44,128.93) -- (36.51,128.93);
+\draw (36.51,128.93) -- (36.58,128.12);
+\draw (36.58,128.12) -- (36.66,126.51);
+\draw (36.66,126.51) -- (36.73,125.71);
+\draw (36.73,125.71) -- (36.80,125.71);
+\draw (36.80,125.71) -- (36.87,124.90);
+\draw (36.87,124.90) -- (36.94,124.90);
+\draw (36.94,124.90) -- (37.02,123.29);
+\draw (37.02,123.29) -- (37.09,122.49);
+\draw (37.09,122.49) -- (37.16,122.49);
+\draw (37.16,122.49) -- (37.23,122.49);
+\draw (37.23,122.49) -- (37.30,121.69);
+\draw (37.30,121.69) -- (37.38,121.69);
+\draw (37.38,121.69) -- (37.45,120.88);
+\draw (37.45,120.88) -- (37.52,120.88);
+\draw (37.52,120.88) -- (37.59,120.08);
+\draw (37.59,120.08) -- (37.66,120.08);
+\draw (37.66,120.08) -- (37.74,120.08);
+\draw (37.74,120.08) -- (37.81,119.27);
+\draw (37.81,119.27) -- (37.88,118.47);
+\draw (37.88,118.47) -- (37.95,117.66);
+\draw (37.95,117.66) -- (38.02,117.66);
+\draw (38.02,117.66) -- (38.10,117.66);
+\draw (38.10,117.66) -- (38.17,116.86);
+\draw (38.17,116.86) -- (38.24,116.86);
+\draw (38.24,116.86) -- (38.31,116.06);
+\draw (38.31,116.06) -- (38.38,116.06);
+\draw (38.38,116.06) -- (38.46,116.06);
+\draw (38.46,116.06) -- (38.53,114.45);
+\draw (38.53,114.45) -- (38.60,114.45);
+\draw (38.60,114.45) -- (40.40,103.99);
+\draw (40.40,103.99) -- (42.20,95.95);
+\draw (42.20,95.95) -- (44.00,91.12);
+\draw (44.00,91.12) -- (45.80,86.29);
+\draw (45.80,86.29) -- (47.60,84.68);
+\draw (47.60,84.68) -- (49.40,83.08);
+\draw (49.40,83.08) -- (51.20,79.05);
+\draw (51.20,79.05) -- (53.00,77.45);
+\draw (53.00,77.45) -- (54.80,76.64);
+\draw (54.80,76.64) -- (56.60,75.84);
+\draw (56.60,75.84) -- (58.40,75.03);
+\draw (58.40,75.03) -- (60.20,73.42);
+\draw (60.20,73.42) -- (62.00,72.62);
+\draw (62.00,72.62) -- (63.80,71.01);
+\draw (63.80,71.01) -- (65.60,71.01);
+\draw (65.60,71.01) -- (67.40,70.21);
+\draw (67.40,70.21) -- (69.20,69.40);
+\draw (69.20,69.40) -- (71.00,67.79);
+\draw (71.00,67.79) -- (72.80,66.99);
+\draw (72.80,66.99) -- (74.60,66.99);
+\draw (74.60,66.99) -- (76.40,66.18);
+\draw (76.40,66.18) -- (78.20,63.77);
+\draw (78.20,63.77) -- (80.00,63.77);
+\draw (80.00,63.77) -- (81.80,63.77);
+\draw (81.80,63.77) -- (83.60,62.97);
+\draw (83.60,62.97) -- (85.41,62.97);
+\draw (85.41,62.97) -- (87.21,61.36);
+\draw (87.21,61.36) -- (89.01,61.36);
+\draw (89.01,61.36) -- (90.81,60.55);
+\draw (90.81,60.55) -- (92.61,60.55);
+\draw (92.61,60.55) -- (94.41,60.55);
+\draw (94.41,60.55) -- (96.21,60.55);
+\draw (96.21,60.55) -- (98.01,60.55);
+\draw (98.01,60.55) -- (99.81,60.55);
+\draw (99.81,60.55) -- (101.61,60.55);
+\draw (101.61,60.55) -- (103.41,59.75);
+\draw (103.41,59.75) -- (105.21,58.94);
+\draw (105.21,58.94) -- (107.01,58.14);
+\draw (107.01,58.14) -- (108.81,57.34);
+\draw (108.81,57.34) -- (110.61,57.34);
+\draw (110.61,57.34) -- (112.41,57.34);
+\draw (112.41,57.34) -- (114.21,57.34);
+\draw (114.21,57.34) -- (116.01,57.34);
+\draw (116.01,57.34) -- (117.81,57.34);
+\draw (117.81,57.34) -- (119.61,57.34);
+\draw (119.61,57.34) -- (121.41,57.34);
+\draw (121.41,57.34) -- (123.21,57.34);
+\draw (123.21,57.34) -- (125.01,56.53);
+\draw (125.01,56.53) -- (126.81,56.53);
+\draw (126.81,56.53) -- (128.61,56.53);
+\draw (128.61,56.53) -- (130.41,56.53);
+\draw (130.41,56.53) -- (132.21,54.92);
+\draw (132.21,54.92) -- (134.01,54.92);
+\draw (134.01,54.92) -- (135.81,54.92);
+\draw (135.81,54.92) -- (137.61,54.92);
+\draw (137.61,54.92) -- (139.41,54.12);
+\draw (139.41,54.12) -- (141.21,53.31);
+\draw (141.21,53.31) -- (143.01,53.31);
+\draw (143.01,53.31) -- (144.81,53.31);
+\draw (144.81,53.31) -- (146.61,53.31);
+\draw (146.61,53.31) -- (148.41,52.51);
+\draw (148.41,52.51) -- (150.21,52.51);
+\draw (150.21,52.51) -- (152.01,52.51);
+\draw (152.01,52.51) -- (153.81,52.51);
+\draw (153.81,52.51) -- (155.61,52.51);
+\draw (155.61,52.51) -- (157.41,50.10);
+\draw (157.41,50.10) -- (159.21,49.29);
+\draw (159.21,49.29) -- (161.01,49.29);
+\draw (161.01,49.29) -- (162.81,48.49);
+\draw (162.81,48.49) -- (164.61,48.49);
+\draw (164.61,48.49) -- (166.41,48.49);
+\draw (166.41,48.49) -- (168.21,46.88);
+\draw (168.21,46.88) -- (170.01,46.07);
+\draw (170.01,46.07) -- (171.81,46.07);
+\draw (171.81,46.07) -- (173.61,46.07);
+\draw (173.61,46.07) -- (175.41,46.07);
+\draw (175.41,46.07) -- (177.21,46.07);
+\draw (177.21,46.07) -- (179.01,46.07);
+\draw (179.01,46.07) -- (180.81,45.27);
+\draw (180.81,45.27) -- (182.61,45.27);
+\draw (182.61,45.27) -- (184.41,45.27);
+\draw (184.41,45.27) -- (186.22,44.47);
+\draw (186.22,44.47) -- (188.02,44.47);
+\draw (188.02,44.47) -- (189.82,44.47);
+\draw (189.82,44.47) -- (191.62,44.47);
+\draw (191.62,44.47) -- (193.42,44.47);
+\draw (193.42,44.47) -- (195.22,44.47);
+\draw (195.22,44.47) -- (197.02,44.47);
+\draw (197.02,44.47) -- (198.82,44.47);
+\draw (198.82,44.47) -- (200.62,44.47);
+\draw (200.62,44.47) -- (202.42,44.47);
+\draw (202.42,44.47) -- (204.22,44.47);
+\draw (204.22,44.47) -- (206.02,44.47);
+\draw (206.02,44.47) -- (207.82,44.47);
+\draw (207.82,44.47) -- (209.62,44.47);
+\draw (209.62,44.47) -- (211.42,44.47);
+\draw (211.42,44.47) -- (213.22,44.47);
+\draw (213.22,44.47) -- (215.02,43.66);
+\draw (215.02,43.66) -- (216.82,43.66);
+\draw (216.82,43.66) -- (218.62,43.66);
+\draw (218.62,43.66) -- (220.42,42.86);
+\draw (220.42,42.86) -- (222.22,42.05);
+\draw (222.22,42.05) -- (224.02,42.05);
+\draw (224.02,42.05) -- (225.82,41.25);
+\draw (225.82,41.25) -- (227.62,41.25);
+\draw (227.62,41.25) -- (229.42,41.25);
+\draw (229.42,41.25) -- (231.22,41.25);
+\draw (231.22,41.25) -- (233.02,41.25);
+\draw (233.02,41.25) -- (234.82,40.44);
+\draw (234.82,40.44) -- (236.62,40.44);
+\draw (236.62,40.44) -- (238.42,40.44);
+\draw (238.42,40.44) -- (240.22,39.64);
+\draw (240.22,39.64) -- (242.02,39.64);
+\draw (242.02,39.64) -- (243.82,39.64);
+\draw (243.82,39.64) -- (245.62,39.64);
+\draw (245.62,39.64) -- (247.42,39.64);
+\draw (247.42,39.64) -- (249.22,39.64);
+\draw (249.22,39.64) -- (251.02,39.64);
+\draw (251.02,39.64) -- (252.82,39.64);
+\draw (252.82,39.64) -- (254.62,39.64);
+\draw (254.62,39.64) -- (256.42,39.64);
+\draw (256.42,39.64) -- (258.22,39.64);
+\draw (258.22,39.64) -- (260.02,39.64);
+\draw (260.02,39.64) -- (261.82,39.64);
+\draw (261.82,39.64) -- (263.62,39.64);
+\draw (263.62,39.64) -- (265.42,39.64);
+\draw (265.42,39.64) -- (267.22,39.64);
+\draw (267.22,39.64) -- (269.02,38.84);
+\draw (269.02,38.84) -- (270.82,38.84);
+\draw (270.82,38.84) -- (272.62,38.84);
+\draw (272.62,38.84) -- (274.42,38.84);
+\draw (274.42,38.84) -- (276.22,38.84);
+\draw (276.22,38.84) -- (278.02,38.84);
+\draw (278.02,38.84) -- (279.82,38.84);
+\draw (279.82,38.84) -- (281.62,38.84);
+\draw (281.62,38.84) -- (283.42,38.84);
+\draw (283.42,38.84) -- (285.23,38.03);
+\draw (285.23,38.03) -- (287.03,38.03);
+\draw (287.03,38.03) -- (288.83,38.03);
+\draw (288.83,38.03) -- (290.63,38.03);
+\draw (290.63,38.03) -- (292.43,36.42);
+\draw (292.43,36.42) -- (294.23,36.42);
+\draw (294.23,36.42) -- (296.03,36.42);
+\draw (296.03,36.42) -- (297.83,36.42);
+\draw (297.83,36.42) -- (299.63,36.42);
+\draw (299.63,36.42) -- (301.43,36.42);
+\draw (301.43,36.42) -- (303.23,36.42);
+\draw (303.23,36.42) -- (305.03,36.42);
+\draw (305.03,36.42) -- (306.83,36.42);
+\draw (306.83,36.42) -- (308.63,36.42);
+\draw (308.63,36.42) -- (310.43,36.42);
+\draw (310.43,36.42) -- (312.23,36.42);
+\draw (312.23,36.42) -- (314.03,36.42);
+\draw (314.03,36.42) -- (315.83,36.42);
+\draw (315.83,36.42) -- (317.63,36.42);
+\draw (317.63,36.42) -- (319.43,36.42);
+\draw (319.43,36.42) -- (321.23,36.42);
+\draw (321.23,36.42) -- (323.03,36.42);
+\draw (323.03,36.42) -- (324.83,36.42);
+\draw (324.83,36.42) -- (326.63,36.42);
+\draw (326.63,36.42) -- (328.43,36.42);
+\draw (328.43,36.42) -- (330.23,36.42);
+\draw (330.23,36.42) -- (332.03,36.42);
+\draw (332.03,36.42) -- (333.83,36.42);
+\draw (333.83,36.42) -- (335.63,36.42);
+\draw (335.63,36.42) -- (337.43,36.42);
+\draw (337.43,36.42) -- (339.23,36.42);
+\draw (339.23,36.42) -- (341.03,36.42);
+\draw (341.03,36.42) -- (342.83,36.42);
+\draw (342.83,36.42) -- (344.63,36.42);
+\draw (344.63,36.42) -- (346.43,36.42);
+\draw (346.43,36.42) -- (348.23,36.42);
+\draw (348.23,36.42) -- (350.03,35.62);
+\draw (350.03,35.62) -- (351.83,35.62);
+\draw (351.83,35.62) -- (353.63,35.62);
+\draw (353.63,35.62) -- (355.43,35.62);
+\draw (355.43,35.62) -- (357.23,35.62);
+\draw (357.23,35.62) -- (359.03,35.62);
+\draw (359.03,35.62) -- (360.83,35.62);
+\draw (360.83,35.62) -- (362.63,35.62);
+\draw (362.63,35.62) -- (364.43,35.62);
+\draw (364.43,35.62) -- (366.23,35.62);
+\draw (366.23,35.62) -- (368.03,35.62);
+\draw (368.03,35.62) -- (369.83,35.62);
+\draw (369.83,35.62) -- (371.63,35.62);
+\draw (371.63,35.62) -- (373.43,35.62);
+\draw (373.43,35.62) -- (375.23,35.62);
+\draw (375.23,35.62) -- (377.03,35.62);
+\draw (377.03,35.62) -- (378.83,35.62);
+\draw (378.83,35.62) -- (380.63,35.62);
+\draw (380.63,35.62) -- (382.43,35.62);
+\draw (382.43,35.62) -- (384.23,34.81);
+\draw (384.23,34.81) -- (386.04,34.81);
+\draw (386.04,34.81) -- (387.84,34.81);
+\draw (387.84,34.81) -- (389.64,34.81);
+\draw (389.64,34.81) -- (391.44,34.81);
+\draw (391.44,34.81) -- (393.24,34.01);
+\draw (393.24,34.01) -- (395.00,34.01);
+\end{tikzpicture}}
+\put(290,172){\makebox(0,0)[l]{\scriptsize reverseRange}}}
+
+\end{picture}}\end{center}
+
+Horizontal axis: iteration. Vertical axis: current closed-tour distance. 
+\begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
+
+\put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
+
+\put(0,25.00){\makebox(30,0)[r]{\scriptsize 108.90}}
+
+\put(0,66.67){\makebox(30,0)[r]{\scriptsize 258.45}}
+
+\put(0,108.33){\makebox(30,0)[r]{\scriptsize 408.00}}
+
+\put(0,150.00){\makebox(30,0)[r]{\scriptsize 557.55}}
+
+\put(35.00,13){\makebox(0,0){\scriptsize 1.00}}
+
+\put(155.00,13){\makebox(0,0){\scriptsize 3334.00}}
+
+\put(275.00,13){\makebox(0,0){\scriptsize 6667.00}}
+
+\put(395.00,13){\makebox(0,0){\scriptsize 10000.00}}
+
+{\color{blue}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,133.13) -- (35.07,132.85);
+\draw (35.07,132.85) -- (35.14,131.46);
+\draw (35.14,131.46) -- (35.22,130.62);
+\draw (35.22,130.62) -- (35.29,129.79);
+\draw (35.29,129.79) -- (35.36,128.67);
+\draw (35.36,128.67) -- (35.43,128.67);
+\draw (35.43,128.67) -- (35.50,130.34);
+\draw (35.50,130.34) -- (35.58,130.07);
+\draw (35.58,130.07) -- (35.65,130.07);
+\draw (35.65,130.07) -- (35.72,130.07);
+\draw (35.72,130.07) -- (35.79,129.51);
+\draw (35.79,129.51) -- (35.86,130.07);
+\draw (35.86,130.07) -- (35.94,130.07);
+\draw (35.94,130.07) -- (36.01,128.67);
+\draw (36.01,128.67) -- (36.08,127.84);
+\draw (36.08,127.84) -- (36.15,127.28);
+\draw (36.15,127.28) -- (36.22,125.05);
+\draw (36.22,125.05) -- (36.30,125.05);
+\draw (36.30,125.05) -- (36.37,125.05);
+\draw (36.37,125.05) -- (36.44,125.05);
+\draw (36.44,125.05) -- (36.51,125.05);
+\draw (36.51,125.05) -- (36.58,124.77);
+\draw (36.58,124.77) -- (36.66,121.15);
+\draw (36.66,121.15) -- (36.73,121.15);
+\draw (36.73,121.15) -- (36.80,119.76);
+\draw (36.80,119.76) -- (36.87,119.20);
+\draw (36.87,119.20) -- (36.94,119.20);
+\draw (36.94,119.20) -- (37.02,119.20);
+\draw (37.02,119.20) -- (37.09,118.92);
+\draw (37.09,118.92) -- (37.16,118.64);
+\draw (37.16,118.64) -- (37.23,118.64);
+\draw (37.23,118.64) -- (37.30,118.08);
+\draw (37.30,118.08) -- (37.38,117.53);
+\draw (37.38,117.53) -- (37.45,116.69);
+\draw (37.45,116.69) -- (37.52,116.69);
+\draw (37.52,116.69) -- (37.59,116.41);
+\draw (37.59,116.41) -- (37.66,116.41);
+\draw (37.66,116.41) -- (37.74,115.58);
+\draw (37.74,115.58) -- (37.81,115.02);
+\draw (37.81,115.02) -- (37.88,113.91);
+\draw (37.88,113.91) -- (37.95,113.91);
+\draw (37.95,113.91) -- (38.02,113.91);
+\draw (38.02,113.91) -- (38.10,113.91);
+\draw (38.10,113.91) -- (38.17,113.91);
+\draw (38.17,113.91) -- (38.24,113.07);
+\draw (38.24,113.07) -- (38.31,111.68);
+\draw (38.31,111.68) -- (38.38,111.68);
+\draw (38.38,111.68) -- (38.46,110.84);
+\draw (38.46,110.84) -- (38.53,110.84);
+\draw (38.53,110.84) -- (38.60,110.84);
+\draw (38.60,110.84) -- (40.40,105.27);
+\draw (40.40,105.27) -- (42.20,102.76);
+\draw (42.20,102.76) -- (44.00,98.86);
+\draw (44.00,98.86) -- (45.80,95.52);
+\draw (45.80,95.52) -- (47.60,92.45);
+\draw (47.60,92.45) -- (49.40,91.06);
+\draw (49.40,91.06) -- (51.20,86.88);
+\draw (51.20,86.88) -- (53.00,85.21);
+\draw (53.00,85.21) -- (54.80,82.14);
+\draw (54.80,82.14) -- (56.60,79.64);
+\draw (56.60,79.64) -- (58.40,78.80);
+\draw (58.40,78.80) -- (60.20,77.96);
+\draw (60.20,77.96) -- (62.00,76.57);
+\draw (62.00,76.57) -- (63.80,75.46);
+\draw (63.80,75.46) -- (65.60,74.62);
+\draw (65.60,74.62) -- (67.40,74.62);
+\draw (67.40,74.62) -- (69.20,74.62);
+\draw (69.20,74.62) -- (71.00,74.62);
+\draw (71.00,74.62) -- (72.80,72.67);
+\draw (72.80,72.67) -- (74.60,71.83);
+\draw (74.60,71.83) -- (76.40,71.00);
+\draw (76.40,71.00) -- (78.20,70.44);
+\draw (78.20,70.44) -- (80.00,69.88);
+\draw (80.00,69.88) -- (81.80,69.05);
+\draw (81.80,69.05) -- (83.60,67.93);
+\draw (83.60,67.93) -- (85.41,67.93);
+\draw (85.41,67.93) -- (87.21,67.66);
+\draw (87.21,67.66) -- (89.01,67.66);
+\draw (89.01,67.66) -- (90.81,67.66);
+\draw (90.81,67.66) -- (92.61,67.38);
+\draw (92.61,67.38) -- (94.41,67.38);
+\draw (94.41,67.38) -- (96.21,67.38);
+\draw (96.21,67.38) -- (98.01,67.38);
+\draw (98.01,67.38) -- (99.81,66.54);
+\draw (99.81,66.54) -- (101.61,66.54);
+\draw (101.61,66.54) -- (103.41,65.98);
+\draw (103.41,65.98) -- (105.21,65.98);
+\draw (105.21,65.98) -- (107.01,65.71);
+\draw (107.01,65.71) -- (108.81,65.15);
+\draw (108.81,65.15) -- (110.61,64.59);
+\draw (110.61,64.59) -- (112.41,64.59);
+\draw (112.41,64.59) -- (114.21,64.03);
+\draw (114.21,64.03) -- (116.01,63.48);
+\draw (116.01,63.48) -- (117.81,63.48);
+\draw (117.81,63.48) -- (119.61,63.48);
+\draw (119.61,63.48) -- (121.41,63.48);
+\draw (121.41,63.48) -- (123.21,63.48);
+\draw (123.21,63.48) -- (125.01,63.48);
+\draw (125.01,63.48) -- (126.81,62.92);
+\draw (126.81,62.92) -- (128.61,62.64);
+\draw (128.61,62.64) -- (130.41,62.64);
+\draw (130.41,62.64) -- (132.21,62.36);
+\draw (132.21,62.36) -- (134.01,61.80);
+\draw (134.01,61.80) -- (135.81,61.80);
+\draw (135.81,61.80) -- (137.61,61.80);
+\draw (137.61,61.80) -- (139.41,61.53);
+\draw (139.41,61.53) -- (141.21,61.53);
+\draw (141.21,61.53) -- (143.01,61.53);
+\draw (143.01,61.53) -- (144.81,61.53);
+\draw (144.81,61.53) -- (146.61,61.25);
+\draw (146.61,61.25) -- (148.41,61.25);
+\draw (148.41,61.25) -- (150.21,61.25);
+\draw (150.21,61.25) -- (152.01,60.13);
+\draw (152.01,60.13) -- (153.81,60.13);
+\draw (153.81,60.13) -- (155.61,59.58);
+\draw (155.61,59.58) -- (157.41,59.58);
+\draw (157.41,59.58) -- (159.21,59.58);
+\draw (159.21,59.58) -- (161.01,58.18);
+\draw (161.01,58.18) -- (162.81,58.18);
+\draw (162.81,58.18) -- (164.61,57.63);
+\draw (164.61,57.63) -- (166.41,57.63);
+\draw (166.41,57.63) -- (168.21,57.35);
+\draw (168.21,57.35) -- (170.01,57.07);
+\draw (170.01,57.07) -- (171.81,57.07);
+\draw (171.81,57.07) -- (173.61,57.07);
+\draw (173.61,57.07) -- (175.41,57.07);
+\draw (175.41,57.07) -- (177.21,57.07);
+\draw (177.21,57.07) -- (179.01,57.07);
+\draw (179.01,57.07) -- (180.81,57.07);
+\draw (180.81,57.07) -- (182.61,57.07);
+\draw (182.61,57.07) -- (184.41,56.79);
+\draw (184.41,56.79) -- (186.22,56.51);
+\draw (186.22,56.51) -- (188.02,56.51);
+\draw (188.02,56.51) -- (189.82,56.51);
+\draw (189.82,56.51) -- (191.62,55.68);
+\draw (191.62,55.68) -- (193.42,55.68);
+\draw (193.42,55.68) -- (195.22,55.68);
+\draw (195.22,55.68) -- (197.02,55.68);
+\draw (197.02,55.68) -- (198.82,55.68);
+\draw (198.82,55.68) -- (200.62,55.68);
+\draw (200.62,55.68) -- (202.42,54.84);
+\draw (202.42,54.84) -- (204.22,54.84);
+\draw (204.22,54.84) -- (206.02,54.84);
+\draw (206.02,54.84) -- (207.82,54.84);
+\draw (207.82,54.84) -- (209.62,54.28);
+\draw (209.62,54.28) -- (211.42,54.28);
+\draw (211.42,54.28) -- (213.22,54.28);
+\draw (213.22,54.28) -- (215.02,54.28);
+\draw (215.02,54.28) -- (216.82,54.28);
+\draw (216.82,54.28) -- (218.62,54.28);
+\draw (218.62,54.28) -- (220.42,54.28);
+\draw (220.42,54.28) -- (222.22,54.28);
+\draw (222.22,54.28) -- (224.02,54.28);
+\draw (224.02,54.28) -- (225.82,54.00);
+\draw (225.82,54.00) -- (227.62,54.00);
+\draw (227.62,54.00) -- (229.42,54.00);
+\draw (229.42,54.00) -- (231.22,54.00);
+\draw (231.22,54.00) -- (233.02,54.00);
+\draw (233.02,54.00) -- (234.82,54.00);
+\draw (234.82,54.00) -- (236.62,54.00);
+\draw (236.62,54.00) -- (238.42,54.00);
+\draw (238.42,54.00) -- (240.22,54.00);
+\draw (240.22,54.00) -- (242.02,54.00);
+\draw (242.02,54.00) -- (243.82,54.00);
+\draw (243.82,54.00) -- (245.62,54.00);
+\draw (245.62,54.00) -- (247.42,54.00);
+\draw (247.42,54.00) -- (249.22,53.73);
+\draw (249.22,53.73) -- (251.02,53.73);
+\draw (251.02,53.73) -- (252.82,53.73);
+\draw (252.82,53.73) -- (254.62,53.73);
+\draw (254.62,53.73) -- (256.42,53.17);
+\draw (256.42,53.17) -- (258.22,53.17);
+\draw (258.22,53.17) -- (260.02,53.17);
+\draw (260.02,53.17) -- (261.82,53.17);
+\draw (261.82,53.17) -- (263.62,52.89);
+\draw (263.62,52.89) -- (265.42,52.89);
+\draw (265.42,52.89) -- (267.22,52.61);
+\draw (267.22,52.61) -- (269.02,52.05);
+\draw (269.02,52.05) -- (270.82,51.77);
+\draw (270.82,51.77) -- (272.62,51.77);
+\draw (272.62,51.77) -- (274.42,51.77);
+\draw (274.42,51.77) -- (276.22,51.77);
+\draw (276.22,51.77) -- (278.02,50.94);
+\draw (278.02,50.94) -- (279.82,50.94);
+\draw (279.82,50.94) -- (281.62,50.94);
+\draw (281.62,50.94) -- (283.42,50.94);
+\draw (283.42,50.94) -- (285.23,50.66);
+\draw (285.23,50.66) -- (287.03,50.66);
+\draw (287.03,50.66) -- (288.83,50.66);
+\draw (288.83,50.66) -- (290.63,50.66);
+\draw (290.63,50.66) -- (292.43,50.66);
+\draw (292.43,50.66) -- (294.23,50.10);
+\draw (294.23,50.10) -- (296.03,50.10);
+\draw (296.03,50.10) -- (297.83,48.99);
+\draw (297.83,48.99) -- (299.63,48.99);
+\draw (299.63,48.99) -- (301.43,48.99);
+\draw (301.43,48.99) -- (303.23,48.71);
+\draw (303.23,48.71) -- (305.03,48.71);
+\draw (305.03,48.71) -- (306.83,48.71);
+\draw (306.83,48.71) -- (308.63,48.71);
+\draw (308.63,48.71) -- (310.43,48.71);
+\draw (310.43,48.71) -- (312.23,48.71);
+\draw (312.23,48.71) -- (314.03,48.71);
+\draw (314.03,48.71) -- (315.83,48.71);
+\draw (315.83,48.71) -- (317.63,48.43);
+\draw (317.63,48.43) -- (319.43,48.43);
+\draw (319.43,48.43) -- (321.23,48.43);
+\draw (321.23,48.43) -- (323.03,48.43);
+\draw (323.03,48.43) -- (324.83,48.43);
+\draw (324.83,48.43) -- (326.63,48.43);
+\draw (326.63,48.43) -- (328.43,47.87);
+\draw (328.43,47.87) -- (330.23,47.87);
+\draw (330.23,47.87) -- (332.03,47.87);
+\draw (332.03,47.87) -- (333.83,47.60);
+\draw (333.83,47.60) -- (335.63,47.60);
+\draw (335.63,47.60) -- (337.43,47.60);
+\draw (337.43,47.60) -- (339.23,47.60);
+\draw (339.23,47.60) -- (341.03,47.60);
+\draw (341.03,47.60) -- (342.83,47.04);
+\draw (342.83,47.04) -- (344.63,47.04);
+\draw (344.63,47.04) -- (346.43,47.04);
+\draw (346.43,47.04) -- (348.23,47.04);
+\draw (348.23,47.04) -- (350.03,47.04);
+\draw (350.03,47.04) -- (351.83,47.04);
+\draw (351.83,47.04) -- (353.63,47.04);
+\draw (353.63,47.04) -- (355.43,47.04);
+\draw (355.43,47.04) -- (357.23,47.04);
+\draw (357.23,47.04) -- (359.03,47.04);
+\draw (359.03,47.04) -- (360.83,47.04);
+\draw (360.83,47.04) -- (362.63,47.04);
+\draw (362.63,47.04) -- (364.43,47.04);
+\draw (364.43,47.04) -- (366.23,47.04);
+\draw (366.23,47.04) -- (368.03,47.04);
+\draw (368.03,47.04) -- (369.83,46.48);
+\draw (369.83,46.48) -- (371.63,45.92);
+\draw (371.63,45.92) -- (373.43,45.92);
+\draw (373.43,45.92) -- (375.23,45.92);
+\draw (375.23,45.92) -- (377.03,45.92);
+\draw (377.03,45.92) -- (378.83,45.92);
+\draw (378.83,45.92) -- (380.63,45.37);
+\draw (380.63,45.37) -- (382.43,45.37);
+\draw (382.43,45.37) -- (384.23,43.69);
+\draw (384.23,43.69) -- (386.04,43.69);
+\draw (386.04,43.69) -- (387.84,43.69);
+\draw (387.84,43.69) -- (389.64,43.69);
+\draw (389.64,43.69) -- (391.44,43.69);
+\draw (391.44,43.69) -- (393.24,43.69);
+\draw (393.24,43.69) -- (395.00,43.69);
+\end{tikzpicture}}
+\put(40,172){\makebox(0,0)[l]{\scriptsize swapPairs}}}
+
+{\color{red}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,133.69) -- (35.07,134.24);
+\draw (35.07,134.24) -- (35.14,132.85);
+\draw (35.14,132.85) -- (35.22,132.29);
+\draw (35.22,132.29) -- (35.29,132.57);
+\draw (35.29,132.57) -- (35.36,132.57);
+\draw (35.36,132.57) -- (35.43,130.90);
+\draw (35.43,130.90) -- (35.50,127.84);
+\draw (35.50,127.84) -- (35.58,125.05);
+\draw (35.58,125.05) -- (35.65,124.77);
+\draw (35.65,124.77) -- (35.72,124.77);
+\draw (35.72,124.77) -- (35.79,124.77);
+\draw (35.79,124.77) -- (35.86,124.21);
+\draw (35.86,124.21) -- (35.94,124.21);
+\draw (35.94,124.21) -- (36.01,124.21);
+\draw (36.01,124.21) -- (36.08,124.21);
+\draw (36.08,124.21) -- (36.15,124.21);
+\draw (36.15,124.21) -- (36.22,124.21);
+\draw (36.22,124.21) -- (36.30,124.21);
+\draw (36.30,124.21) -- (36.37,124.21);
+\draw (36.37,124.21) -- (36.44,124.21);
+\draw (36.44,124.21) -- (36.51,124.21);
+\draw (36.51,124.21) -- (36.58,124.21);
+\draw (36.58,124.21) -- (36.66,121.99);
+\draw (36.66,121.99) -- (36.73,121.99);
+\draw (36.73,121.99) -- (36.80,121.99);
+\draw (36.80,121.99) -- (36.87,121.99);
+\draw (36.87,121.99) -- (36.94,121.99);
+\draw (36.94,121.99) -- (37.02,121.99);
+\draw (37.02,121.99) -- (37.09,121.99);
+\draw (37.09,121.99) -- (37.16,121.99);
+\draw (37.16,121.99) -- (37.23,121.99);
+\draw (37.23,121.99) -- (37.30,121.99);
+\draw (37.30,121.99) -- (37.38,121.43);
+\draw (37.38,121.43) -- (37.45,121.43);
+\draw (37.45,121.43) -- (37.52,121.43);
+\draw (37.52,121.43) -- (37.59,121.43);
+\draw (37.59,121.43) -- (37.66,121.43);
+\draw (37.66,121.43) -- (37.74,121.43);
+\draw (37.74,121.43) -- (37.81,121.43);
+\draw (37.81,121.43) -- (37.88,121.43);
+\draw (37.88,121.43) -- (37.95,121.43);
+\draw (37.95,121.43) -- (38.02,121.43);
+\draw (38.02,121.43) -- (38.10,121.43);
+\draw (38.10,121.43) -- (38.17,121.43);
+\draw (38.17,121.43) -- (38.24,119.76);
+\draw (38.24,119.76) -- (38.31,119.76);
+\draw (38.31,119.76) -- (38.38,119.76);
+\draw (38.38,119.76) -- (38.46,119.76);
+\draw (38.46,119.76) -- (38.53,119.76);
+\draw (38.53,119.76) -- (38.60,119.20);
+\draw (38.60,119.20) -- (40.40,114.46);
+\draw (40.40,114.46) -- (42.20,108.33);
+\draw (42.20,108.33) -- (44.00,103.88);
+\draw (44.00,103.88) -- (45.80,102.76);
+\draw (45.80,102.76) -- (47.60,101.93);
+\draw (47.60,101.93) -- (49.40,101.93);
+\draw (49.40,101.93) -- (51.20,100.53);
+\draw (51.20,100.53) -- (53.00,100.25);
+\draw (53.00,100.25) -- (54.80,100.25);
+\draw (54.80,100.25) -- (56.60,100.25);
+\draw (56.60,100.25) -- (58.40,98.58);
+\draw (58.40,98.58) -- (60.20,97.47);
+\draw (60.20,97.47) -- (62.00,96.63);
+\draw (62.00,96.63) -- (63.80,95.80);
+\draw (63.80,95.80) -- (65.60,93.85);
+\draw (65.60,93.85) -- (67.40,93.57);
+\draw (67.40,93.57) -- (69.20,92.73);
+\draw (69.20,92.73) -- (71.00,90.78);
+\draw (71.00,90.78) -- (72.80,90.78);
+\draw (72.80,90.78) -- (74.60,90.22);
+\draw (74.60,90.22) -- (76.40,89.94);
+\draw (76.40,89.94) -- (78.20,89.94);
+\draw (78.20,89.94) -- (80.00,89.94);
+\draw (80.00,89.94) -- (81.80,89.94);
+\draw (81.80,89.94) -- (83.60,89.94);
+\draw (83.60,89.94) -- (85.41,89.67);
+\draw (85.41,89.67) -- (87.21,89.39);
+\draw (87.21,89.39) -- (89.01,89.39);
+\draw (89.01,89.39) -- (90.81,89.39);
+\draw (90.81,89.39) -- (92.61,89.39);
+\draw (92.61,89.39) -- (94.41,89.11);
+\draw (94.41,89.11) -- (96.21,88.83);
+\draw (96.21,88.83) -- (98.01,87.44);
+\draw (98.01,87.44) -- (99.81,87.44);
+\draw (99.81,87.44) -- (101.61,87.44);
+\draw (101.61,87.44) -- (103.41,87.44);
+\draw (103.41,87.44) -- (105.21,86.04);
+\draw (105.21,86.04) -- (107.01,86.04);
+\draw (107.01,86.04) -- (108.81,85.49);
+\draw (108.81,85.49) -- (110.61,85.21);
+\draw (110.61,85.21) -- (112.41,85.21);
+\draw (112.41,85.21) -- (114.21,84.37);
+\draw (114.21,84.37) -- (116.01,84.37);
+\draw (116.01,84.37) -- (117.81,84.37);
+\draw (117.81,84.37) -- (119.61,83.82);
+\draw (119.61,83.82) -- (121.41,83.82);
+\draw (121.41,83.82) -- (123.21,83.82);
+\draw (123.21,83.82) -- (125.01,83.82);
+\draw (125.01,83.82) -- (126.81,83.82);
+\draw (126.81,83.82) -- (128.61,82.98);
+\draw (128.61,82.98) -- (130.41,82.42);
+\draw (130.41,82.42) -- (132.21,81.87);
+\draw (132.21,81.87) -- (134.01,81.87);
+\draw (134.01,81.87) -- (135.81,81.59);
+\draw (135.81,81.59) -- (137.61,81.59);
+\draw (137.61,81.59) -- (139.41,81.59);
+\draw (139.41,81.59) -- (141.21,81.59);
+\draw (141.21,81.59) -- (143.01,81.59);
+\draw (143.01,81.59) -- (144.81,81.59);
+\draw (144.81,81.59) -- (146.61,81.59);
+\draw (146.61,81.59) -- (148.41,80.19);
+\draw (148.41,80.19) -- (150.21,79.08);
+\draw (150.21,79.08) -- (152.01,79.08);
+\draw (152.01,79.08) -- (153.81,78.24);
+\draw (153.81,78.24) -- (155.61,77.13);
+\draw (155.61,77.13) -- (157.41,76.57);
+\draw (157.41,76.57) -- (159.21,76.57);
+\draw (159.21,76.57) -- (161.01,76.29);
+\draw (161.01,76.29) -- (162.81,76.01);
+\draw (162.81,76.01) -- (164.61,76.01);
+\draw (164.61,76.01) -- (166.41,76.01);
+\draw (166.41,76.01) -- (168.21,76.01);
+\draw (168.21,76.01) -- (170.01,76.01);
+\draw (170.01,76.01) -- (171.81,75.74);
+\draw (171.81,75.74) -- (173.61,75.74);
+\draw (173.61,75.74) -- (175.41,75.74);
+\draw (175.41,75.74) -- (177.21,75.74);
+\draw (177.21,75.74) -- (179.01,75.74);
+\draw (179.01,75.74) -- (180.81,75.18);
+\draw (180.81,75.18) -- (182.61,75.18);
+\draw (182.61,75.18) -- (184.41,75.18);
+\draw (184.41,75.18) -- (186.22,75.18);
+\draw (186.22,75.18) -- (188.02,75.18);
+\draw (188.02,75.18) -- (189.82,75.18);
+\draw (189.82,75.18) -- (191.62,75.18);
+\draw (191.62,75.18) -- (193.42,74.90);
+\draw (193.42,74.90) -- (195.22,74.90);
+\draw (195.22,74.90) -- (197.02,74.90);
+\draw (197.02,74.90) -- (198.82,74.90);
+\draw (198.82,74.90) -- (200.62,74.90);
+\draw (200.62,74.90) -- (202.42,74.90);
+\draw (202.42,74.90) -- (204.22,74.90);
+\draw (204.22,74.90) -- (206.02,74.90);
+\draw (206.02,74.90) -- (207.82,74.90);
+\draw (207.82,74.90) -- (209.62,74.90);
+\draw (209.62,74.90) -- (211.42,74.90);
+\draw (211.42,74.90) -- (213.22,74.90);
+\draw (213.22,74.90) -- (215.02,74.90);
+\draw (215.02,74.90) -- (216.82,74.90);
+\draw (216.82,74.90) -- (218.62,74.90);
+\draw (218.62,74.90) -- (220.42,74.90);
+\draw (220.42,74.90) -- (222.22,74.90);
+\draw (222.22,74.90) -- (224.02,74.90);
+\draw (224.02,74.90) -- (225.82,74.90);
+\draw (225.82,74.90) -- (227.62,74.90);
+\draw (227.62,74.90) -- (229.42,74.90);
+\draw (229.42,74.90) -- (231.22,74.90);
+\draw (231.22,74.90) -- (233.02,74.90);
+\draw (233.02,74.90) -- (234.82,74.90);
+\draw (234.82,74.90) -- (236.62,74.90);
+\draw (236.62,74.90) -- (238.42,74.90);
+\draw (238.42,74.90) -- (240.22,74.90);
+\draw (240.22,74.90) -- (242.02,74.90);
+\draw (242.02,74.90) -- (243.82,74.90);
+\draw (243.82,74.90) -- (245.62,74.90);
+\draw (245.62,74.90) -- (247.42,74.34);
+\draw (247.42,74.34) -- (249.22,74.34);
+\draw (249.22,74.34) -- (251.02,74.34);
+\draw (251.02,74.34) -- (252.82,74.34);
+\draw (252.82,74.34) -- (254.62,74.34);
+\draw (254.62,74.34) -- (256.42,74.34);
+\draw (256.42,74.34) -- (258.22,74.34);
+\draw (258.22,74.34) -- (260.02,74.34);
+\draw (260.02,74.34) -- (261.82,74.34);
+\draw (261.82,74.34) -- (263.62,74.34);
+\draw (263.62,74.34) -- (265.42,74.34);
+\draw (265.42,74.34) -- (267.22,74.34);
+\draw (267.22,74.34) -- (269.02,74.34);
+\draw (269.02,74.34) -- (270.82,74.34);
+\draw (270.82,74.34) -- (272.62,74.34);
+\draw (272.62,74.34) -- (274.42,74.34);
+\draw (274.42,74.34) -- (276.22,74.34);
+\draw (276.22,74.34) -- (278.02,73.79);
+\draw (278.02,73.79) -- (279.82,73.79);
+\draw (279.82,73.79) -- (281.62,73.79);
+\draw (281.62,73.79) -- (283.42,73.51);
+\draw (283.42,73.51) -- (285.23,73.51);
+\draw (285.23,73.51) -- (287.03,73.51);
+\draw (287.03,73.51) -- (288.83,73.51);
+\draw (288.83,73.51) -- (290.63,73.51);
+\draw (290.63,73.51) -- (292.43,73.51);
+\draw (292.43,73.51) -- (294.23,73.51);
+\draw (294.23,73.51) -- (296.03,73.51);
+\draw (296.03,73.51) -- (297.83,73.51);
+\draw (297.83,73.51) -- (299.63,73.51);
+\draw (299.63,73.51) -- (301.43,72.39);
+\draw (301.43,72.39) -- (303.23,71.83);
+\draw (303.23,71.83) -- (305.03,71.83);
+\draw (305.03,71.83) -- (306.83,71.83);
+\draw (306.83,71.83) -- (308.63,71.83);
+\draw (308.63,71.83) -- (310.43,71.83);
+\draw (310.43,71.83) -- (312.23,71.83);
+\draw (312.23,71.83) -- (314.03,71.83);
+\draw (314.03,71.83) -- (315.83,71.83);
+\draw (315.83,71.83) -- (317.63,71.83);
+\draw (317.63,71.83) -- (319.43,71.83);
+\draw (319.43,71.83) -- (321.23,71.83);
+\draw (321.23,71.83) -- (323.03,71.83);
+\draw (323.03,71.83) -- (324.83,71.83);
+\draw (324.83,71.83) -- (326.63,71.56);
+\draw (326.63,71.56) -- (328.43,71.56);
+\draw (328.43,71.56) -- (330.23,71.56);
+\draw (330.23,71.56) -- (332.03,71.56);
+\draw (332.03,71.56) -- (333.83,71.56);
+\draw (333.83,71.56) -- (335.63,71.56);
+\draw (335.63,71.56) -- (337.43,71.56);
+\draw (337.43,71.56) -- (339.23,71.56);
+\draw (339.23,71.56) -- (341.03,71.56);
+\draw (341.03,71.56) -- (342.83,71.56);
+\draw (342.83,71.56) -- (344.63,71.56);
+\draw (344.63,71.56) -- (346.43,71.56);
+\draw (346.43,71.56) -- (348.23,71.56);
+\draw (348.23,71.56) -- (350.03,71.56);
+\draw (350.03,71.56) -- (351.83,71.56);
+\draw (351.83,71.56) -- (353.63,71.56);
+\draw (353.63,71.56) -- (355.43,71.56);
+\draw (355.43,71.56) -- (357.23,71.28);
+\draw (357.23,71.28) -- (359.03,71.28);
+\draw (359.03,71.28) -- (360.83,71.28);
+\draw (360.83,71.28) -- (362.63,71.28);
+\draw (362.63,71.28) -- (364.43,71.28);
+\draw (364.43,71.28) -- (366.23,71.28);
+\draw (366.23,71.28) -- (368.03,71.28);
+\draw (368.03,71.28) -- (369.83,71.28);
+\draw (369.83,71.28) -- (371.63,71.28);
+\draw (371.63,71.28) -- (373.43,71.28);
+\draw (373.43,71.28) -- (375.23,71.28);
+\draw (375.23,71.28) -- (377.03,71.28);
+\draw (377.03,71.28) -- (378.83,71.00);
+\draw (378.83,71.00) -- (380.63,71.00);
+\draw (380.63,71.00) -- (382.43,71.00);
+\draw (382.43,71.00) -- (384.23,71.00);
+\draw (384.23,71.00) -- (386.04,71.00);
+\draw (386.04,71.00) -- (387.84,71.00);
+\draw (387.84,71.00) -- (389.64,71.00);
+\draw (389.64,71.00) -- (391.44,71.00);
+\draw (391.44,71.00) -- (393.24,71.00);
+\draw (393.24,71.00) -- (395.00,71.00);
+\end{tikzpicture}}
+\put(165,172){\makebox(0,0)[l]{\scriptsize permuteRange}}}
+
+{\color{black}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,142.32) -- (35.07,142.05);
+\draw (35.07,142.05) -- (35.14,142.60);
+\draw (35.14,142.60) -- (35.22,142.32);
+\draw (35.22,142.32) -- (35.29,141.49);
+\draw (35.29,141.49) -- (35.36,140.65);
+\draw (35.36,140.65) -- (35.43,140.93);
+\draw (35.43,140.93) -- (35.50,138.98);
+\draw (35.50,138.98) -- (35.58,137.87);
+\draw (35.58,137.87) -- (35.65,137.31);
+\draw (35.65,137.31) -- (35.72,137.31);
+\draw (35.72,137.31) -- (35.79,137.03);
+\draw (35.79,137.03) -- (35.86,137.03);
+\draw (35.86,137.03) -- (35.94,137.03);
+\draw (35.94,137.03) -- (36.01,136.75);
+\draw (36.01,136.75) -- (36.08,136.75);
+\draw (36.08,136.75) -- (36.15,135.92);
+\draw (36.15,135.92) -- (36.22,135.36);
+\draw (36.22,135.36) -- (36.30,135.08);
+\draw (36.30,135.08) -- (36.37,134.80);
+\draw (36.37,134.80) -- (36.44,130.34);
+\draw (36.44,130.34) -- (36.51,130.34);
+\draw (36.51,130.34) -- (36.58,130.07);
+\draw (36.58,130.07) -- (36.66,130.07);
+\draw (36.66,130.07) -- (36.73,130.07);
+\draw (36.73,130.07) -- (36.80,129.23);
+\draw (36.80,129.23) -- (36.87,128.39);
+\draw (36.87,128.39) -- (36.94,127.84);
+\draw (36.94,127.84) -- (37.02,127.84);
+\draw (37.02,127.84) -- (37.09,127.84);
+\draw (37.09,127.84) -- (37.16,127.56);
+\draw (37.16,127.56) -- (37.23,127.56);
+\draw (37.23,127.56) -- (37.30,125.61);
+\draw (37.30,125.61) -- (37.38,125.33);
+\draw (37.38,125.33) -- (37.45,124.77);
+\draw (37.45,124.77) -- (37.52,124.77);
+\draw (37.52,124.77) -- (37.59,124.49);
+\draw (37.59,124.49) -- (37.66,124.49);
+\draw (37.66,124.49) -- (37.74,122.82);
+\draw (37.74,122.82) -- (37.81,121.99);
+\draw (37.81,121.99) -- (37.88,121.71);
+\draw (37.88,121.71) -- (37.95,121.43);
+\draw (37.95,121.43) -- (38.02,120.59);
+\draw (38.02,120.59) -- (38.10,120.59);
+\draw (38.10,120.59) -- (38.17,120.59);
+\draw (38.17,120.59) -- (38.24,120.04);
+\draw (38.24,120.04) -- (38.31,120.04);
+\draw (38.31,120.04) -- (38.38,120.04);
+\draw (38.38,120.04) -- (38.46,120.04);
+\draw (38.46,120.04) -- (38.53,118.64);
+\draw (38.53,118.64) -- (38.60,117.81);
+\draw (38.60,117.81) -- (40.40,110.28);
+\draw (40.40,110.28) -- (42.20,101.09);
+\draw (42.20,101.09) -- (44.00,96.07);
+\draw (44.00,96.07) -- (45.80,93.01);
+\draw (45.80,93.01) -- (47.60,87.44);
+\draw (47.60,87.44) -- (49.40,83.54);
+\draw (49.40,83.54) -- (51.20,79.64);
+\draw (51.20,79.64) -- (53.00,74.90);
+\draw (53.00,74.90) -- (54.80,72.39);
+\draw (54.80,72.39) -- (56.60,69.88);
+\draw (56.60,69.88) -- (58.40,68.49);
+\draw (58.40,68.49) -- (60.20,67.38);
+\draw (60.20,67.38) -- (62.00,65.98);
+\draw (62.00,65.98) -- (63.80,65.71);
+\draw (63.80,65.71) -- (65.60,65.43);
+\draw (65.60,65.43) -- (67.40,63.20);
+\draw (67.40,63.20) -- (69.20,60.97);
+\draw (69.20,60.97) -- (71.00,60.13);
+\draw (71.00,60.13) -- (72.80,58.46);
+\draw (72.80,58.46) -- (74.60,57.90);
+\draw (74.60,57.90) -- (76.40,57.07);
+\draw (76.40,57.07) -- (78.20,57.07);
+\draw (78.20,57.07) -- (80.00,56.23);
+\draw (80.00,56.23) -- (81.80,55.68);
+\draw (81.80,55.68) -- (83.60,55.12);
+\draw (83.60,55.12) -- (85.41,54.00);
+\draw (85.41,54.00) -- (87.21,53.45);
+\draw (87.21,53.45) -- (89.01,52.61);
+\draw (89.01,52.61) -- (90.81,52.05);
+\draw (90.81,52.05) -- (92.61,52.05);
+\draw (92.61,52.05) -- (94.41,52.05);
+\draw (94.41,52.05) -- (96.21,51.50);
+\draw (96.21,51.50) -- (98.01,50.94);
+\draw (98.01,50.94) -- (99.81,50.94);
+\draw (99.81,50.94) -- (101.61,50.38);
+\draw (101.61,50.38) -- (103.41,48.71);
+\draw (103.41,48.71) -- (105.21,47.60);
+\draw (105.21,47.60) -- (107.01,47.60);
+\draw (107.01,47.60) -- (108.81,46.48);
+\draw (108.81,46.48) -- (110.61,46.48);
+\draw (110.61,46.48) -- (112.41,46.20);
+\draw (112.41,46.20) -- (114.21,46.20);
+\draw (114.21,46.20) -- (116.01,45.65);
+\draw (116.01,45.65) -- (117.81,44.81);
+\draw (117.81,44.81) -- (119.61,44.81);
+\draw (119.61,44.81) -- (121.41,44.25);
+\draw (121.41,44.25) -- (123.21,43.14);
+\draw (123.21,43.14) -- (125.01,42.58);
+\draw (125.01,42.58) -- (126.81,42.30);
+\draw (126.81,42.30) -- (128.61,42.30);
+\draw (128.61,42.30) -- (130.41,42.30);
+\draw (130.41,42.30) -- (132.21,41.74);
+\draw (132.21,41.74) -- (134.01,41.74);
+\draw (134.01,41.74) -- (135.81,41.74);
+\draw (135.81,41.74) -- (137.61,41.74);
+\draw (137.61,41.74) -- (139.41,40.91);
+\draw (139.41,40.91) -- (141.21,40.07);
+\draw (141.21,40.07) -- (143.01,40.07);
+\draw (143.01,40.07) -- (144.81,39.79);
+\draw (144.81,39.79) -- (146.61,39.79);
+\draw (146.61,39.79) -- (148.41,38.96);
+\draw (148.41,38.96) -- (150.21,38.96);
+\draw (150.21,38.96) -- (152.01,38.96);
+\draw (152.01,38.96) -- (153.81,38.96);
+\draw (153.81,38.96) -- (155.61,38.68);
+\draw (155.61,38.68) -- (157.41,37.57);
+\draw (157.41,37.57) -- (159.21,37.57);
+\draw (159.21,37.57) -- (161.01,37.57);
+\draw (161.01,37.57) -- (162.81,37.57);
+\draw (162.81,37.57) -- (164.61,37.57);
+\draw (164.61,37.57) -- (166.41,37.01);
+\draw (166.41,37.01) -- (168.21,36.73);
+\draw (168.21,36.73) -- (170.01,36.73);
+\draw (170.01,36.73) -- (171.81,36.73);
+\draw (171.81,36.73) -- (173.61,36.45);
+\draw (173.61,36.45) -- (175.41,36.17);
+\draw (175.41,36.17) -- (177.21,35.34);
+\draw (177.21,35.34) -- (179.01,35.34);
+\draw (179.01,35.34) -- (180.81,35.06);
+\draw (180.81,35.06) -- (182.61,35.06);
+\draw (182.61,35.06) -- (184.41,35.06);
+\draw (184.41,35.06) -- (186.22,35.06);
+\draw (186.22,35.06) -- (188.02,35.06);
+\draw (188.02,35.06) -- (189.82,35.06);
+\draw (189.82,35.06) -- (191.62,35.06);
+\draw (191.62,35.06) -- (193.42,34.78);
+\draw (193.42,34.78) -- (195.22,34.78);
+\draw (195.22,34.78) -- (197.02,34.78);
+\draw (197.02,34.78) -- (198.82,34.22);
+\draw (198.82,34.22) -- (200.62,34.22);
+\draw (200.62,34.22) -- (202.42,34.22);
+\draw (202.42,34.22) -- (204.22,33.94);
+\draw (204.22,33.94) -- (206.02,33.66);
+\draw (206.02,33.66) -- (207.82,33.39);
+\draw (207.82,33.39) -- (209.62,33.39);
+\draw (209.62,33.39) -- (211.42,33.39);
+\draw (211.42,33.39) -- (213.22,33.11);
+\draw (213.22,33.11) -- (215.02,33.11);
+\draw (215.02,33.11) -- (216.82,33.11);
+\draw (216.82,33.11) -- (218.62,33.11);
+\draw (218.62,33.11) -- (220.42,33.11);
+\draw (220.42,33.11) -- (222.22,33.11);
+\draw (222.22,33.11) -- (224.02,33.11);
+\draw (224.02,33.11) -- (225.82,33.11);
+\draw (225.82,33.11) -- (227.62,33.11);
+\draw (227.62,33.11) -- (229.42,33.11);
+\draw (229.42,33.11) -- (231.22,33.11);
+\draw (231.22,33.11) -- (233.02,32.83);
+\draw (233.02,32.83) -- (234.82,32.55);
+\draw (234.82,32.55) -- (236.62,32.55);
+\draw (236.62,32.55) -- (238.42,32.55);
+\draw (238.42,32.55) -- (240.22,32.55);
+\draw (240.22,32.55) -- (242.02,32.55);
+\draw (242.02,32.55) -- (243.82,32.55);
+\draw (243.82,32.55) -- (245.62,32.55);
+\draw (245.62,32.55) -- (247.42,32.55);
+\draw (247.42,32.55) -- (249.22,32.55);
+\draw (249.22,32.55) -- (251.02,32.27);
+\draw (251.02,32.27) -- (252.82,32.27);
+\draw (252.82,32.27) -- (254.62,32.27);
+\draw (254.62,32.27) -- (256.42,31.99);
+\draw (256.42,31.99) -- (258.22,31.99);
+\draw (258.22,31.99) -- (260.02,31.99);
+\draw (260.02,31.99) -- (261.82,31.99);
+\draw (261.82,31.99) -- (263.62,31.44);
+\draw (263.62,31.44) -- (265.42,31.44);
+\draw (265.42,31.44) -- (267.22,31.44);
+\draw (267.22,31.44) -- (269.02,31.44);
+\draw (269.02,31.44) -- (270.82,31.16);
+\draw (270.82,31.16) -- (272.62,31.16);
+\draw (272.62,31.16) -- (274.42,31.16);
+\draw (274.42,31.16) -- (276.22,31.16);
+\draw (276.22,31.16) -- (278.02,31.16);
+\draw (278.02,31.16) -- (279.82,31.16);
+\draw (279.82,31.16) -- (281.62,31.16);
+\draw (281.62,31.16) -- (283.42,31.16);
+\draw (283.42,31.16) -- (285.23,31.16);
+\draw (285.23,31.16) -- (287.03,31.16);
+\draw (287.03,31.16) -- (288.83,31.16);
+\draw (288.83,31.16) -- (290.63,31.16);
+\draw (290.63,31.16) -- (292.43,31.16);
+\draw (292.43,31.16) -- (294.23,31.16);
+\draw (294.23,31.16) -- (296.03,31.16);
+\draw (296.03,31.16) -- (297.83,31.16);
+\draw (297.83,31.16) -- (299.63,31.16);
+\draw (299.63,31.16) -- (301.43,30.88);
+\draw (301.43,30.88) -- (303.23,30.88);
+\draw (303.23,30.88) -- (305.03,30.88);
+\draw (305.03,30.88) -- (306.83,30.88);
+\draw (306.83,30.88) -- (308.63,30.88);
+\draw (308.63,30.88) -- (310.43,30.88);
+\draw (310.43,30.88) -- (312.23,30.88);
+\draw (312.23,30.88) -- (314.03,30.60);
+\draw (314.03,30.60) -- (315.83,30.60);
+\draw (315.83,30.60) -- (317.63,30.60);
+\draw (317.63,30.60) -- (319.43,30.60);
+\draw (319.43,30.60) -- (321.23,30.60);
+\draw (321.23,30.60) -- (323.03,30.60);
+\draw (323.03,30.60) -- (324.83,30.60);
+\draw (324.83,30.60) -- (326.63,30.60);
+\draw (326.63,30.60) -- (328.43,30.60);
+\draw (328.43,30.60) -- (330.23,30.60);
+\draw (330.23,30.60) -- (332.03,30.60);
+\draw (332.03,30.60) -- (333.83,30.60);
+\draw (333.83,30.60) -- (335.63,30.60);
+\draw (335.63,30.60) -- (337.43,30.60);
+\draw (337.43,30.60) -- (339.23,30.60);
+\draw (339.23,30.60) -- (341.03,30.60);
+\draw (341.03,30.60) -- (342.83,30.60);
+\draw (342.83,30.60) -- (344.63,30.32);
+\draw (344.63,30.32) -- (346.43,30.32);
+\draw (346.43,30.32) -- (348.23,30.32);
+\draw (348.23,30.32) -- (350.03,30.32);
+\draw (350.03,30.32) -- (351.83,30.32);
+\draw (351.83,30.32) -- (353.63,30.32);
+\draw (353.63,30.32) -- (355.43,30.32);
+\draw (355.43,30.32) -- (357.23,30.32);
+\draw (357.23,30.32) -- (359.03,30.32);
+\draw (359.03,30.32) -- (360.83,30.32);
+\draw (360.83,30.32) -- (362.63,30.32);
+\draw (362.63,30.32) -- (364.43,30.32);
+\draw (364.43,30.32) -- (366.23,30.32);
+\draw (366.23,30.32) -- (368.03,30.32);
+\draw (368.03,30.32) -- (369.83,30.32);
+\draw (369.83,30.32) -- (371.63,30.04);
+\draw (371.63,30.04) -- (373.43,30.04);
+\draw (373.43,30.04) -- (375.23,30.04);
+\draw (375.23,30.04) -- (377.03,30.04);
+\draw (377.03,30.04) -- (378.83,29.76);
+\draw (378.83,29.76) -- (380.63,29.49);
+\draw (380.63,29.49) -- (382.43,29.49);
+\draw (382.43,29.49) -- (384.23,29.49);
+\draw (384.23,29.49) -- (386.04,29.49);
+\draw (386.04,29.49) -- (387.84,29.49);
+\draw (387.84,29.49) -- (389.64,29.49);
+\draw (389.64,29.49) -- (391.44,29.49);
+\draw (391.44,29.49) -- (393.24,28.37);
+\draw (393.24,28.37) -- (395.00,28.37);
+\end{tikzpicture}}
+\put(290,172){\makebox(0,0)[l]{\scriptsize reverseRange}}}
+
+\end{picture}}\end{center}
+
+Horizontal axis: iteration. Vertical axis: current closed-tour distance. 
+\begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
+
+\put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
+
+\put(0,25.00){\makebox(30,0)[r]{\scriptsize 9.13}}
+
+\put(0,66.67){\makebox(30,0)[r]{\scriptsize 25.95}}
+
+\put(0,108.33){\makebox(30,0)[r]{\scriptsize 42.77}}
+
+\put(0,150.00){\makebox(30,0)[r]{\scriptsize 59.58}}
+
+\put(35.00,13){\makebox(0,0){\scriptsize 1.00}}
+
+\put(155.00,13){\makebox(0,0){\scriptsize 3334.00}}
+
+\put(275.00,13){\makebox(0,0){\scriptsize 6667.00}}
+
+\put(395.00,13){\makebox(0,0){\scriptsize 10000.00}}
+
+{\color{blue}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,133.51) -- (35.07,131.48);
+\draw (35.07,131.48) -- (35.14,130.53);
+\draw (35.14,130.53) -- (35.22,125.45);
+\draw (35.22,125.45) -- (35.29,120.86);
+\draw (35.29,120.86) -- (35.36,122.36);
+\draw (35.36,122.36) -- (35.43,122.33);
+\draw (35.43,122.33) -- (35.50,123.00);
+\draw (35.50,123.00) -- (35.58,127.64);
+\draw (35.58,127.64) -- (35.65,123.19);
+\draw (35.65,123.19) -- (35.72,121.71);
+\draw (35.72,121.71) -- (35.79,121.54);
+\draw (35.79,121.54) -- (35.86,121.54);
+\draw (35.86,121.54) -- (35.94,121.65);
+\draw (35.94,121.65) -- (36.01,120.61);
+\draw (36.01,120.61) -- (36.08,118.72);
+\draw (36.08,118.72) -- (36.15,118.72);
+\draw (36.15,118.72) -- (36.22,116.38);
+\draw (36.22,116.38) -- (36.30,113.94);
+\draw (36.30,113.94) -- (36.37,112.47);
+\draw (36.37,112.47) -- (36.44,112.68);
+\draw (36.44,112.68) -- (36.51,112.68);
+\draw (36.51,112.68) -- (36.58,108.15);
+\draw (36.58,108.15) -- (36.66,108.15);
+\draw (36.66,108.15) -- (36.73,108.15);
+\draw (36.73,108.15) -- (36.80,107.90);
+\draw (36.80,107.90) -- (36.87,107.90);
+\draw (36.87,107.90) -- (36.94,107.90);
+\draw (36.94,107.90) -- (37.02,107.90);
+\draw (37.02,107.90) -- (37.09,107.82);
+\draw (37.09,107.82) -- (37.16,107.82);
+\draw (37.16,107.82) -- (37.23,107.82);
+\draw (37.23,107.82) -- (37.30,105.82);
+\draw (37.30,105.82) -- (37.38,105.82);
+\draw (37.38,105.82) -- (37.45,105.82);
+\draw (37.45,105.82) -- (37.52,104.00);
+\draw (37.52,104.00) -- (37.59,104.00);
+\draw (37.59,104.00) -- (37.66,103.92);
+\draw (37.66,103.92) -- (37.74,101.46);
+\draw (37.74,101.46) -- (37.81,98.05);
+\draw (37.81,98.05) -- (37.88,96.99);
+\draw (37.88,96.99) -- (37.95,96.99);
+\draw (37.95,96.99) -- (38.02,94.59);
+\draw (38.02,94.59) -- (38.10,94.02);
+\draw (38.10,94.02) -- (38.17,93.96);
+\draw (38.17,93.96) -- (38.24,93.96);
+\draw (38.24,93.96) -- (38.31,93.96);
+\draw (38.31,93.96) -- (38.38,91.99);
+\draw (38.38,91.99) -- (38.46,91.99);
+\draw (38.46,91.99) -- (38.53,90.44);
+\draw (38.53,90.44) -- (38.60,90.44);
+\draw (38.60,90.44) -- (40.40,79.15);
+\draw (40.40,79.15) -- (42.20,70.39);
+\draw (42.20,70.39) -- (44.00,66.00);
+\draw (44.00,66.00) -- (45.80,60.75);
+\draw (45.80,60.75) -- (47.60,60.51);
+\draw (47.60,60.51) -- (49.40,59.73);
+\draw (49.40,59.73) -- (51.20,58.35);
+\draw (51.20,58.35) -- (53.00,56.18);
+\draw (53.00,56.18) -- (54.80,54.14);
+\draw (54.80,54.14) -- (56.60,52.44);
+\draw (56.60,52.44) -- (58.40,50.23);
+\draw (58.40,50.23) -- (60.20,48.75);
+\draw (60.20,48.75) -- (62.00,48.43);
+\draw (62.00,48.43) -- (63.80,44.51);
+\draw (63.80,44.51) -- (65.60,43.35);
+\draw (65.60,43.35) -- (67.40,40.64);
+\draw (67.40,40.64) -- (69.20,40.53);
+\draw (69.20,40.53) -- (71.00,39.41);
+\draw (71.00,39.41) -- (72.80,38.75);
+\draw (72.80,38.75) -- (74.60,38.75);
+\draw (74.60,38.75) -- (76.40,38.75);
+\draw (76.40,38.75) -- (78.20,38.47);
+\draw (78.20,38.47) -- (80.00,38.35);
+\draw (80.00,38.35) -- (81.80,38.35);
+\draw (81.80,38.35) -- (83.60,38.35);
+\draw (83.60,38.35) -- (85.41,38.29);
+\draw (85.41,38.29) -- (87.21,38.29);
+\draw (87.21,38.29) -- (89.01,38.29);
+\draw (89.01,38.29) -- (90.81,38.29);
+\draw (90.81,38.29) -- (92.61,38.29);
+\draw (92.61,38.29) -- (94.41,38.29);
+\draw (94.41,38.29) -- (96.21,38.29);
+\draw (96.21,38.29) -- (98.01,38.29);
+\draw (98.01,38.29) -- (99.81,38.29);
+\draw (99.81,38.29) -- (101.61,38.29);
+\draw (101.61,38.29) -- (103.41,38.29);
+\draw (103.41,38.29) -- (105.21,38.29);
+\draw (105.21,38.29) -- (107.01,37.29);
+\draw (107.01,37.29) -- (108.81,37.29);
+\draw (108.81,37.29) -- (110.61,37.29);
+\draw (110.61,37.29) -- (112.41,37.29);
+\draw (112.41,37.29) -- (114.21,37.22);
+\draw (114.21,37.22) -- (116.01,37.22);
+\draw (116.01,37.22) -- (117.81,37.22);
+\draw (117.81,37.22) -- (119.61,37.22);
+\draw (119.61,37.22) -- (121.41,37.22);
+\draw (121.41,37.22) -- (123.21,37.22);
+\draw (123.21,37.22) -- (125.01,37.22);
+\draw (125.01,37.22) -- (126.81,37.19);
+\draw (126.81,37.19) -- (128.61,37.19);
+\draw (128.61,37.19) -- (130.41,37.19);
+\draw (130.41,37.19) -- (132.21,37.19);
+\draw (132.21,37.19) -- (134.01,37.19);
+\draw (134.01,37.19) -- (135.81,37.19);
+\draw (135.81,37.19) -- (137.61,37.19);
+\draw (137.61,37.19) -- (139.41,37.19);
+\draw (139.41,37.19) -- (141.21,37.19);
+\draw (141.21,37.19) -- (143.01,37.19);
+\draw (143.01,37.19) -- (144.81,37.19);
+\draw (144.81,37.19) -- (146.61,37.19);
+\draw (146.61,37.19) -- (148.41,36.93);
+\draw (148.41,36.93) -- (150.21,36.93);
+\draw (150.21,36.93) -- (152.01,36.93);
+\draw (152.01,36.93) -- (153.81,36.93);
+\draw (153.81,36.93) -- (155.61,36.93);
+\draw (155.61,36.93) -- (157.41,36.93);
+\draw (157.41,36.93) -- (159.21,36.93);
+\draw (159.21,36.93) -- (161.01,36.93);
+\draw (161.01,36.93) -- (162.81,36.93);
+\draw (162.81,36.93) -- (164.61,36.93);
+\draw (164.61,36.93) -- (166.41,36.93);
+\draw (166.41,36.93) -- (168.21,36.49);
+\draw (168.21,36.49) -- (170.01,36.49);
+\draw (170.01,36.49) -- (171.81,36.49);
+\draw (171.81,36.49) -- (173.61,36.49);
+\draw (173.61,36.49) -- (175.41,36.49);
+\draw (175.41,36.49) -- (177.21,35.79);
+\draw (177.21,35.79) -- (179.01,35.68);
+\draw (179.01,35.68) -- (180.81,35.68);
+\draw (180.81,35.68) -- (182.61,35.57);
+\draw (182.61,35.57) -- (184.41,35.57);
+\draw (184.41,35.57) -- (186.22,35.57);
+\draw (186.22,35.57) -- (188.02,35.57);
+\draw (188.02,35.57) -- (189.82,35.57);
+\draw (189.82,35.57) -- (191.62,35.57);
+\draw (191.62,35.57) -- (193.42,35.15);
+\draw (193.42,35.15) -- (195.22,35.15);
+\draw (195.22,35.15) -- (197.02,34.90);
+\draw (197.02,34.90) -- (198.82,34.90);
+\draw (198.82,34.90) -- (200.62,34.90);
+\draw (200.62,34.90) -- (202.42,34.86);
+\draw (202.42,34.86) -- (204.22,34.86);
+\draw (204.22,34.86) -- (206.02,34.86);
+\draw (206.02,34.86) -- (207.82,34.86);
+\draw (207.82,34.86) -- (209.62,34.86);
+\draw (209.62,34.86) -- (211.42,34.86);
+\draw (211.42,34.86) -- (213.22,34.58);
+\draw (213.22,34.58) -- (215.02,34.58);
+\draw (215.02,34.58) -- (216.82,34.58);
+\draw (216.82,34.58) -- (218.62,34.14);
+\draw (218.62,34.14) -- (220.42,34.14);
+\draw (220.42,34.14) -- (222.22,34.14);
+\draw (222.22,34.14) -- (224.02,34.14);
+\draw (224.02,34.14) -- (225.82,34.14);
+\draw (225.82,34.14) -- (227.62,34.14);
+\draw (227.62,34.14) -- (229.42,33.87);
+\draw (229.42,33.87) -- (231.22,33.87);
+\draw (231.22,33.87) -- (233.02,33.87);
+\draw (233.02,33.87) -- (234.82,33.87);
+\draw (234.82,33.87) -- (236.62,33.87);
+\draw (236.62,33.87) -- (238.42,33.87);
+\draw (238.42,33.87) -- (240.22,32.63);
+\draw (240.22,32.63) -- (242.02,32.57);
+\draw (242.02,32.57) -- (243.82,32.57);
+\draw (243.82,32.57) -- (245.62,32.57);
+\draw (245.62,32.57) -- (247.42,32.57);
+\draw (247.42,32.57) -- (249.22,32.40);
+\draw (249.22,32.40) -- (251.02,32.40);
+\draw (251.02,32.40) -- (252.82,32.40);
+\draw (252.82,32.40) -- (254.62,32.40);
+\draw (254.62,32.40) -- (256.42,32.40);
+\draw (256.42,32.40) -- (258.22,31.60);
+\draw (258.22,31.60) -- (260.02,31.60);
+\draw (260.02,31.60) -- (261.82,30.30);
+\draw (261.82,30.30) -- (263.62,30.20);
+\draw (263.62,30.20) -- (265.42,30.20);
+\draw (265.42,30.20) -- (267.22,30.20);
+\draw (267.22,30.20) -- (269.02,28.69);
+\draw (269.02,28.69) -- (270.82,28.69);
+\draw (270.82,28.69) -- (272.62,28.69);
+\draw (272.62,28.69) -- (274.42,28.69);
+\draw (274.42,28.69) -- (276.22,28.69);
+\draw (276.22,28.69) -- (278.02,28.69);
+\draw (278.02,28.69) -- (279.82,28.49);
+\draw (279.82,28.49) -- (281.62,28.49);
+\draw (281.62,28.49) -- (283.42,28.49);
+\draw (283.42,28.49) -- (285.23,28.49);
+\draw (285.23,28.49) -- (287.03,28.49);
+\draw (287.03,28.49) -- (288.83,28.49);
+\draw (288.83,28.49) -- (290.63,28.49);
+\draw (290.63,28.49) -- (292.43,28.49);
+\draw (292.43,28.49) -- (294.23,28.49);
+\draw (294.23,28.49) -- (296.03,28.49);
+\draw (296.03,28.49) -- (297.83,28.49);
+\draw (297.83,28.49) -- (299.63,28.49);
+\draw (299.63,28.49) -- (301.43,28.49);
+\draw (301.43,28.49) -- (303.23,28.49);
+\draw (303.23,28.49) -- (305.03,28.49);
+\draw (305.03,28.49) -- (306.83,28.49);
+\draw (306.83,28.49) -- (308.63,28.49);
+\draw (308.63,28.49) -- (310.43,28.49);
+\draw (310.43,28.49) -- (312.23,28.49);
+\draw (312.23,28.49) -- (314.03,28.49);
+\draw (314.03,28.49) -- (315.83,28.49);
+\draw (315.83,28.49) -- (317.63,28.49);
+\draw (317.63,28.49) -- (319.43,28.22);
+\draw (319.43,28.22) -- (321.23,28.15);
+\draw (321.23,28.15) -- (323.03,28.15);
+\draw (323.03,28.15) -- (324.83,28.15);
+\draw (324.83,28.15) -- (326.63,27.56);
+\draw (326.63,27.56) -- (328.43,27.56);
+\draw (328.43,27.56) -- (330.23,27.56);
+\draw (330.23,27.56) -- (332.03,27.56);
+\draw (332.03,27.56) -- (333.83,27.56);
+\draw (333.83,27.56) -- (335.63,27.56);
+\draw (335.63,27.56) -- (337.43,27.56);
+\draw (337.43,27.56) -- (339.23,27.56);
+\draw (339.23,27.56) -- (341.03,27.56);
+\draw (341.03,27.56) -- (342.83,27.56);
+\draw (342.83,27.56) -- (344.63,27.56);
+\draw (344.63,27.56) -- (346.43,27.56);
+\draw (346.43,27.56) -- (348.23,27.56);
+\draw (348.23,27.56) -- (350.03,27.54);
+\draw (350.03,27.54) -- (351.83,27.54);
+\draw (351.83,27.54) -- (353.63,27.54);
+\draw (353.63,27.54) -- (355.43,27.54);
+\draw (355.43,27.54) -- (357.23,27.51);
+\draw (357.23,27.51) -- (359.03,27.51);
+\draw (359.03,27.51) -- (360.83,27.51);
+\draw (360.83,27.51) -- (362.63,27.51);
+\draw (362.63,27.51) -- (364.43,27.51);
+\draw (364.43,27.51) -- (366.23,27.51);
+\draw (366.23,27.51) -- (368.03,27.51);
+\draw (368.03,27.51) -- (369.83,27.51);
+\draw (369.83,27.51) -- (371.63,27.51);
+\draw (371.63,27.51) -- (373.43,27.51);
+\draw (373.43,27.51) -- (375.23,27.51);
+\draw (375.23,27.51) -- (377.03,27.51);
+\draw (377.03,27.51) -- (378.83,27.51);
+\draw (378.83,27.51) -- (380.63,27.51);
+\draw (380.63,27.51) -- (382.43,27.51);
+\draw (382.43,27.51) -- (384.23,27.51);
+\draw (384.23,27.51) -- (386.04,27.51);
+\draw (386.04,27.51) -- (387.84,27.51);
+\draw (387.84,27.51) -- (389.64,27.51);
+\draw (389.64,27.51) -- (391.44,27.51);
+\draw (391.44,27.51) -- (393.24,27.51);
+\draw (393.24,27.51) -- (395.00,27.51);
+\end{tikzpicture}}
+\put(40,172){\makebox(0,0)[l]{\scriptsize swapPairs}}}
+
+{\color{red}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,138.75) -- (35.07,132.58);
+\draw (35.07,132.58) -- (35.14,131.48);
+\draw (35.14,131.48) -- (35.22,142.97);
+\draw (35.22,142.97) -- (35.29,134.04);
+\draw (35.29,134.04) -- (35.36,132.87);
+\draw (35.36,132.87) -- (35.43,126.54);
+\draw (35.43,126.54) -- (35.50,133.17);
+\draw (35.50,133.17) -- (35.58,136.59);
+\draw (35.58,136.59) -- (35.65,136.89);
+\draw (35.65,136.89) -- (35.72,135.61);
+\draw (35.72,135.61) -- (35.79,135.47);
+\draw (35.79,135.47) -- (35.86,133.43);
+\draw (35.86,133.43) -- (35.94,126.13);
+\draw (35.94,126.13) -- (36.01,124.52);
+\draw (36.01,124.52) -- (36.08,114.65);
+\draw (36.08,114.65) -- (36.15,114.65);
+\draw (36.15,114.65) -- (36.22,114.65);
+\draw (36.22,114.65) -- (36.30,114.65);
+\draw (36.30,114.65) -- (36.37,114.65);
+\draw (36.37,114.65) -- (36.44,114.65);
+\draw (36.44,114.65) -- (36.51,114.65);
+\draw (36.51,114.65) -- (36.58,114.65);
+\draw (36.58,114.65) -- (36.66,114.65);
+\draw (36.66,114.65) -- (36.73,114.65);
+\draw (36.73,114.65) -- (36.80,111.63);
+\draw (36.80,111.63) -- (36.87,111.63);
+\draw (36.87,111.63) -- (36.94,111.63);
+\draw (36.94,111.63) -- (37.02,111.63);
+\draw (37.02,111.63) -- (37.09,107.75);
+\draw (37.09,107.75) -- (37.16,107.75);
+\draw (37.16,107.75) -- (37.23,106.52);
+\draw (37.23,106.52) -- (37.30,106.52);
+\draw (37.30,106.52) -- (37.38,106.52);
+\draw (37.38,106.52) -- (37.45,106.21);
+\draw (37.45,106.21) -- (37.52,106.21);
+\draw (37.52,106.21) -- (37.59,106.21);
+\draw (37.59,106.21) -- (37.66,104.45);
+\draw (37.66,104.45) -- (37.74,104.45);
+\draw (37.74,104.45) -- (37.81,104.45);
+\draw (37.81,104.45) -- (37.88,104.45);
+\draw (37.88,104.45) -- (37.95,104.45);
+\draw (37.95,104.45) -- (38.02,104.45);
+\draw (38.02,104.45) -- (38.10,104.45);
+\draw (38.10,104.45) -- (38.17,104.45);
+\draw (38.17,104.45) -- (38.24,104.45);
+\draw (38.24,104.45) -- (38.31,104.19);
+\draw (38.31,104.19) -- (38.38,104.19);
+\draw (38.38,104.19) -- (38.46,103.36);
+\draw (38.46,103.36) -- (38.53,103.36);
+\draw (38.53,103.36) -- (38.60,103.36);
+\draw (38.60,103.36) -- (40.40,100.02);
+\draw (40.40,100.02) -- (42.20,96.01);
+\draw (42.20,96.01) -- (44.00,87.37);
+\draw (44.00,87.37) -- (45.80,87.37);
+\draw (45.80,87.37) -- (47.60,86.23);
+\draw (47.60,86.23) -- (49.40,85.34);
+\draw (49.40,85.34) -- (51.20,85.34);
+\draw (51.20,85.34) -- (53.00,83.69);
+\draw (53.00,83.69) -- (54.80,80.90);
+\draw (54.80,80.90) -- (56.60,78.30);
+\draw (56.60,78.30) -- (58.40,78.30);
+\draw (58.40,78.30) -- (60.20,78.28);
+\draw (60.20,78.28) -- (62.00,78.28);
+\draw (62.00,78.28) -- (63.80,78.28);
+\draw (63.80,78.28) -- (65.60,76.76);
+\draw (65.60,76.76) -- (67.40,76.76);
+\draw (67.40,76.76) -- (69.20,73.48);
+\draw (69.20,73.48) -- (71.00,73.48);
+\draw (71.00,73.48) -- (72.80,73.48);
+\draw (72.80,73.48) -- (74.60,70.66);
+\draw (74.60,70.66) -- (76.40,70.12);
+\draw (76.40,70.12) -- (78.20,70.12);
+\draw (78.20,70.12) -- (80.00,70.12);
+\draw (80.00,70.12) -- (81.80,69.31);
+\draw (81.80,69.31) -- (83.60,69.31);
+\draw (83.60,69.31) -- (85.41,68.56);
+\draw (85.41,68.56) -- (87.21,68.56);
+\draw (87.21,68.56) -- (89.01,68.56);
+\draw (89.01,68.56) -- (90.81,68.56);
+\draw (90.81,68.56) -- (92.61,68.56);
+\draw (92.61,68.56) -- (94.41,68.56);
+\draw (94.41,68.56) -- (96.21,68.56);
+\draw (96.21,68.56) -- (98.01,67.66);
+\draw (98.01,67.66) -- (99.81,67.66);
+\draw (99.81,67.66) -- (101.61,67.66);
+\draw (101.61,67.66) -- (103.41,67.66);
+\draw (103.41,67.66) -- (105.21,67.66);
+\draw (105.21,67.66) -- (107.01,67.66);
+\draw (107.01,67.66) -- (108.81,67.66);
+\draw (108.81,67.66) -- (110.61,67.66);
+\draw (110.61,67.66) -- (112.41,67.66);
+\draw (112.41,67.66) -- (114.21,67.66);
+\draw (114.21,67.66) -- (116.01,65.48);
+\draw (116.01,65.48) -- (117.81,65.48);
+\draw (117.81,65.48) -- (119.61,65.48);
+\draw (119.61,65.48) -- (121.41,65.48);
+\draw (121.41,65.48) -- (123.21,64.45);
+\draw (123.21,64.45) -- (125.01,64.45);
+\draw (125.01,64.45) -- (126.81,64.45);
+\draw (126.81,64.45) -- (128.61,63.28);
+\draw (128.61,63.28) -- (130.41,63.28);
+\draw (130.41,63.28) -- (132.21,62.95);
+\draw (132.21,62.95) -- (134.01,62.95);
+\draw (134.01,62.95) -- (135.81,62.95);
+\draw (135.81,62.95) -- (137.61,62.95);
+\draw (137.61,62.95) -- (139.41,61.22);
+\draw (139.41,61.22) -- (141.21,61.22);
+\draw (141.21,61.22) -- (143.01,61.22);
+\draw (143.01,61.22) -- (144.81,61.22);
+\draw (144.81,61.22) -- (146.61,61.22);
+\draw (146.61,61.22) -- (148.41,61.22);
+\draw (148.41,61.22) -- (150.21,61.22);
+\draw (150.21,61.22) -- (152.01,61.22);
+\draw (152.01,61.22) -- (153.81,61.22);
+\draw (153.81,61.22) -- (155.61,61.22);
+\draw (155.61,61.22) -- (157.41,61.22);
+\draw (157.41,61.22) -- (159.21,61.22);
+\draw (159.21,61.22) -- (161.01,61.22);
+\draw (161.01,61.22) -- (162.81,61.22);
+\draw (162.81,61.22) -- (164.61,61.22);
+\draw (164.61,61.22) -- (166.41,61.22);
+\draw (166.41,61.22) -- (168.21,61.22);
+\draw (168.21,61.22) -- (170.01,61.22);
+\draw (170.01,61.22) -- (171.81,61.22);
+\draw (171.81,61.22) -- (173.61,61.22);
+\draw (173.61,61.22) -- (175.41,61.22);
+\draw (175.41,61.22) -- (177.21,61.22);
+\draw (177.21,61.22) -- (179.01,61.22);
+\draw (179.01,61.22) -- (180.81,61.22);
+\draw (180.81,61.22) -- (182.61,59.91);
+\draw (182.61,59.91) -- (184.41,59.91);
+\draw (184.41,59.91) -- (186.22,59.91);
+\draw (186.22,59.91) -- (188.02,59.91);
+\draw (188.02,59.91) -- (189.82,59.91);
+\draw (189.82,59.91) -- (191.62,59.91);
+\draw (191.62,59.91) -- (193.42,59.91);
+\draw (193.42,59.91) -- (195.22,59.90);
+\draw (195.22,59.90) -- (197.02,59.90);
+\draw (197.02,59.90) -- (198.82,59.15);
+\draw (198.82,59.15) -- (200.62,59.15);
+\draw (200.62,59.15) -- (202.42,59.15);
+\draw (202.42,59.15) -- (204.22,59.15);
+\draw (204.22,59.15) -- (206.02,59.15);
+\draw (206.02,59.15) -- (207.82,59.15);
+\draw (207.82,59.15) -- (209.62,59.15);
+\draw (209.62,59.15) -- (211.42,59.15);
+\draw (211.42,59.15) -- (213.22,59.15);
+\draw (213.22,59.15) -- (215.02,59.15);
+\draw (215.02,59.15) -- (216.82,59.15);
+\draw (216.82,59.15) -- (218.62,59.15);
+\draw (218.62,59.15) -- (220.42,59.15);
+\draw (220.42,59.15) -- (222.22,59.15);
+\draw (222.22,59.15) -- (224.02,59.15);
+\draw (224.02,59.15) -- (225.82,59.15);
+\draw (225.82,59.15) -- (227.62,56.94);
+\draw (227.62,56.94) -- (229.42,56.94);
+\draw (229.42,56.94) -- (231.22,56.94);
+\draw (231.22,56.94) -- (233.02,56.94);
+\draw (233.02,56.94) -- (234.82,56.94);
+\draw (234.82,56.94) -- (236.62,56.94);
+\draw (236.62,56.94) -- (238.42,56.94);
+\draw (238.42,56.94) -- (240.22,56.94);
+\draw (240.22,56.94) -- (242.02,56.94);
+\draw (242.02,56.94) -- (243.82,56.94);
+\draw (243.82,56.94) -- (245.62,55.85);
+\draw (245.62,55.85) -- (247.42,55.85);
+\draw (247.42,55.85) -- (249.22,55.85);
+\draw (249.22,55.85) -- (251.02,55.85);
+\draw (251.02,55.85) -- (252.82,55.85);
+\draw (252.82,55.85) -- (254.62,55.85);
+\draw (254.62,55.85) -- (256.42,55.85);
+\draw (256.42,55.85) -- (258.22,55.85);
+\draw (258.22,55.85) -- (260.02,55.85);
+\draw (260.02,55.85) -- (261.82,55.85);
+\draw (261.82,55.85) -- (263.62,55.85);
+\draw (263.62,55.85) -- (265.42,54.91);
+\draw (265.42,54.91) -- (267.22,54.91);
+\draw (267.22,54.91) -- (269.02,54.91);
+\draw (269.02,54.91) -- (270.82,54.91);
+\draw (270.82,54.91) -- (272.62,54.91);
+\draw (272.62,54.91) -- (274.42,54.91);
+\draw (274.42,54.91) -- (276.22,54.91);
+\draw (276.22,54.91) -- (278.02,54.91);
+\draw (278.02,54.91) -- (279.82,54.84);
+\draw (279.82,54.84) -- (281.62,54.84);
+\draw (281.62,54.84) -- (283.42,54.84);
+\draw (283.42,54.84) -- (285.23,54.84);
+\draw (285.23,54.84) -- (287.03,54.84);
+\draw (287.03,54.84) -- (288.83,54.84);
+\draw (288.83,54.84) -- (290.63,54.84);
+\draw (290.63,54.84) -- (292.43,54.84);
+\draw (292.43,54.84) -- (294.23,53.21);
+\draw (294.23,53.21) -- (296.03,53.21);
+\draw (296.03,53.21) -- (297.83,53.21);
+\draw (297.83,53.21) -- (299.63,53.21);
+\draw (299.63,53.21) -- (301.43,53.21);
+\draw (301.43,53.21) -- (303.23,53.21);
+\draw (303.23,53.21) -- (305.03,53.21);
+\draw (305.03,53.21) -- (306.83,53.21);
+\draw (306.83,53.21) -- (308.63,53.21);
+\draw (308.63,53.21) -- (310.43,53.04);
+\draw (310.43,53.04) -- (312.23,53.04);
+\draw (312.23,53.04) -- (314.03,53.04);
+\draw (314.03,53.04) -- (315.83,53.04);
+\draw (315.83,53.04) -- (317.63,53.04);
+\draw (317.63,53.04) -- (319.43,53.04);
+\draw (319.43,53.04) -- (321.23,53.04);
+\draw (321.23,53.04) -- (323.03,53.04);
+\draw (323.03,53.04) -- (324.83,53.04);
+\draw (324.83,53.04) -- (326.63,53.04);
+\draw (326.63,53.04) -- (328.43,53.04);
+\draw (328.43,53.04) -- (330.23,53.04);
+\draw (330.23,53.04) -- (332.03,53.04);
+\draw (332.03,53.04) -- (333.83,53.04);
+\draw (333.83,53.04) -- (335.63,53.04);
+\draw (335.63,53.04) -- (337.43,53.04);
+\draw (337.43,53.04) -- (339.23,53.04);
+\draw (339.23,53.04) -- (341.03,53.04);
+\draw (341.03,53.04) -- (342.83,53.04);
+\draw (342.83,53.04) -- (344.63,53.04);
+\draw (344.63,53.04) -- (346.43,53.04);
+\draw (346.43,53.04) -- (348.23,53.04);
+\draw (348.23,53.04) -- (350.03,53.04);
+\draw (350.03,53.04) -- (351.83,53.04);
+\draw (351.83,53.04) -- (353.63,53.04);
+\draw (353.63,53.04) -- (355.43,52.52);
+\draw (355.43,52.52) -- (357.23,52.52);
+\draw (357.23,52.52) -- (359.03,52.52);
+\draw (359.03,52.52) -- (360.83,52.52);
+\draw (360.83,52.52) -- (362.63,52.52);
+\draw (362.63,52.52) -- (364.43,52.52);
+\draw (364.43,52.52) -- (366.23,52.52);
+\draw (366.23,52.52) -- (368.03,52.52);
+\draw (368.03,52.52) -- (369.83,52.52);
+\draw (369.83,52.52) -- (371.63,52.52);
+\draw (371.63,52.52) -- (373.43,52.06);
+\draw (373.43,52.06) -- (375.23,52.06);
+\draw (375.23,52.06) -- (377.03,52.06);
+\draw (377.03,52.06) -- (378.83,52.06);
+\draw (378.83,52.06) -- (380.63,51.01);
+\draw (380.63,51.01) -- (382.43,51.01);
+\draw (382.43,51.01) -- (384.23,50.93);
+\draw (384.23,50.93) -- (386.04,50.93);
+\draw (386.04,50.93) -- (387.84,50.93);
+\draw (387.84,50.93) -- (389.64,50.93);
+\draw (389.64,50.93) -- (391.44,50.93);
+\draw (391.44,50.93) -- (393.24,50.93);
+\draw (393.24,50.93) -- (395.00,50.93);
+\end{tikzpicture}}
+\put(165,172){\makebox(0,0)[l]{\scriptsize permuteRange}}}
+
+{\color{black}
+\put(0,0){\begin{tikzpicture}[overlay,x=1pt,y=1pt]
+\draw (35.00,117.08) -- (35.07,133.05);
+\draw (35.07,133.05) -- (35.14,117.56);
+\draw (35.14,117.56) -- (35.22,115.58);
+\draw (35.22,115.58) -- (35.29,111.32);
+\draw (35.29,111.32) -- (35.36,115.55);
+\draw (35.36,115.55) -- (35.43,116.81);
+\draw (35.43,116.81) -- (35.50,112.38);
+\draw (35.50,112.38) -- (35.58,112.38);
+\draw (35.58,112.38) -- (35.65,112.38);
+\draw (35.65,112.38) -- (35.72,114.04);
+\draw (35.72,114.04) -- (35.79,114.04);
+\draw (35.79,114.04) -- (35.86,115.43);
+\draw (35.86,115.43) -- (35.94,115.43);
+\draw (35.94,115.43) -- (36.01,115.43);
+\draw (36.01,115.43) -- (36.08,117.02);
+\draw (36.08,117.02) -- (36.15,117.02);
+\draw (36.15,117.02) -- (36.22,117.02);
+\draw (36.22,117.02) -- (36.30,117.02);
+\draw (36.30,117.02) -- (36.37,117.02);
+\draw (36.37,117.02) -- (36.44,117.02);
+\draw (36.44,117.02) -- (36.51,117.02);
+\draw (36.51,117.02) -- (36.58,117.02);
+\draw (36.58,117.02) -- (36.66,111.25);
+\draw (36.66,111.25) -- (36.73,110.91);
+\draw (36.73,110.91) -- (36.80,110.91);
+\draw (36.80,110.91) -- (36.87,110.91);
+\draw (36.87,110.91) -- (36.94,110.91);
+\draw (36.94,110.91) -- (37.02,110.91);
+\draw (37.02,110.91) -- (37.09,110.91);
+\draw (37.09,110.91) -- (37.16,110.91);
+\draw (37.16,110.91) -- (37.23,110.91);
+\draw (37.23,110.91) -- (37.30,110.91);
+\draw (37.30,110.91) -- (37.38,110.91);
+\draw (37.38,110.91) -- (37.45,110.91);
+\draw (37.45,110.91) -- (37.52,110.91);
+\draw (37.52,110.91) -- (37.59,110.91);
+\draw (37.59,110.91) -- (37.66,110.91);
+\draw (37.66,110.91) -- (37.74,110.91);
+\draw (37.74,110.91) -- (37.81,110.91);
+\draw (37.81,110.91) -- (37.88,110.91);
+\draw (37.88,110.91) -- (37.95,109.40);
+\draw (37.95,109.40) -- (38.02,109.40);
+\draw (38.02,109.40) -- (38.10,109.40);
+\draw (38.10,109.40) -- (38.17,109.40);
+\draw (38.17,109.40) -- (38.24,109.40);
+\draw (38.24,109.40) -- (38.31,109.40);
+\draw (38.31,109.40) -- (38.38,109.40);
+\draw (38.38,109.40) -- (38.46,109.40);
+\draw (38.46,109.40) -- (38.53,109.40);
+\draw (38.53,109.40) -- (38.60,109.40);
+\draw (38.60,109.40) -- (40.40,106.14);
+\draw (40.40,106.14) -- (42.20,100.71);
+\draw (42.20,100.71) -- (44.00,97.40);
+\draw (44.00,97.40) -- (45.80,93.91);
+\draw (45.80,93.91) -- (47.60,90.78);
+\draw (47.60,90.78) -- (49.40,89.45);
+\draw (49.40,89.45) -- (51.20,89.24);
+\draw (51.20,89.24) -- (53.00,85.60);
+\draw (53.00,85.60) -- (54.80,85.60);
+\draw (54.80,85.60) -- (56.60,85.60);
+\draw (56.60,85.60) -- (58.40,85.51);
+\draw (58.40,85.51) -- (60.20,83.39);
+\draw (60.20,83.39) -- (62.00,83.39);
+\draw (62.00,83.39) -- (63.80,83.37);
+\draw (63.80,83.37) -- (65.60,83.37);
+\draw (65.60,83.37) -- (67.40,81.64);
+\draw (67.40,81.64) -- (69.20,81.64);
+\draw (69.20,81.64) -- (71.00,81.64);
+\draw (71.00,81.64) -- (72.80,81.64);
+\draw (72.80,81.64) -- (74.60,81.64);
+\draw (74.60,81.64) -- (76.40,80.19);
+\draw (76.40,80.19) -- (78.20,80.19);
+\draw (78.20,80.19) -- (80.00,80.19);
+\draw (80.00,80.19) -- (81.80,80.19);
+\draw (81.80,80.19) -- (83.60,80.19);
+\draw (83.60,80.19) -- (85.41,80.19);
+\draw (85.41,80.19) -- (87.21,80.11);
+\draw (87.21,80.11) -- (89.01,80.11);
+\draw (89.01,80.11) -- (90.81,78.99);
+\draw (90.81,78.99) -- (92.61,78.99);
+\draw (92.61,78.99) -- (94.41,78.05);
+\draw (94.41,78.05) -- (96.21,78.05);
+\draw (96.21,78.05) -- (98.01,77.43);
+\draw (98.01,77.43) -- (99.81,77.43);
+\draw (99.81,77.43) -- (101.61,77.43);
+\draw (101.61,77.43) -- (103.41,77.43);
+\draw (103.41,77.43) -- (105.21,77.43);
+\draw (105.21,77.43) -- (107.01,76.39);
+\draw (107.01,76.39) -- (108.81,76.39);
+\draw (108.81,76.39) -- (110.61,76.39);
+\draw (110.61,76.39) -- (112.41,76.39);
+\draw (112.41,76.39) -- (114.21,75.23);
+\draw (114.21,75.23) -- (116.01,75.23);
+\draw (116.01,75.23) -- (117.81,75.23);
+\draw (117.81,75.23) -- (119.61,73.73);
+\draw (119.61,73.73) -- (121.41,73.73);
+\draw (121.41,73.73) -- (123.21,73.73);
+\draw (123.21,73.73) -- (125.01,73.73);
+\draw (125.01,73.73) -- (126.81,73.73);
+\draw (126.81,73.73) -- (128.61,71.60);
+\draw (128.61,71.60) -- (130.41,70.46);
+\draw (130.41,70.46) -- (132.21,70.46);
+\draw (132.21,70.46) -- (134.01,70.46);
+\draw (134.01,70.46) -- (135.81,70.46);
+\draw (135.81,70.46) -- (137.61,70.46);
+\draw (137.61,70.46) -- (139.41,70.46);
+\draw (139.41,70.46) -- (141.21,70.46);
+\draw (141.21,70.46) -- (143.01,70.46);
+\draw (143.01,70.46) -- (144.81,70.46);
+\draw (144.81,70.46) -- (146.61,70.46);
+\draw (146.61,70.46) -- (148.41,70.46);
+\draw (148.41,70.46) -- (150.21,70.46);
+\draw (150.21,70.46) -- (152.01,70.46);
+\draw (152.01,70.46) -- (153.81,70.34);
+\draw (153.81,70.34) -- (155.61,70.34);
+\draw (155.61,70.34) -- (157.41,70.34);
+\draw (157.41,70.34) -- (159.21,68.59);
+\draw (159.21,68.59) -- (161.01,68.59);
+\draw (161.01,68.59) -- (162.81,68.59);
+\draw (162.81,68.59) -- (164.61,68.59);
+\draw (164.61,68.59) -- (166.41,68.59);
+\draw (166.41,68.59) -- (168.21,68.59);
+\draw (168.21,68.59) -- (170.01,68.59);
+\draw (170.01,68.59) -- (171.81,68.59);
+\draw (171.81,68.59) -- (173.61,68.59);
+\draw (173.61,68.59) -- (175.41,68.59);
+\draw (175.41,68.59) -- (177.21,68.59);
+\draw (177.21,68.59) -- (179.01,68.59);
+\draw (179.01,68.59) -- (180.81,68.59);
+\draw (180.81,68.59) -- (182.61,68.59);
+\draw (182.61,68.59) -- (184.41,68.59);
+\draw (184.41,68.59) -- (186.22,68.59);
+\draw (186.22,68.59) -- (188.02,68.59);
+\draw (188.02,68.59) -- (189.82,68.59);
+\draw (189.82,68.59) -- (191.62,68.59);
+\draw (191.62,68.59) -- (193.42,68.59);
+\draw (193.42,68.59) -- (195.22,68.59);
+\draw (195.22,68.59) -- (197.02,68.59);
+\draw (197.02,68.59) -- (198.82,68.59);
+\draw (198.82,68.59) -- (200.62,68.59);
+\draw (200.62,68.59) -- (202.42,68.59);
+\draw (202.42,68.59) -- (204.22,68.59);
+\draw (204.22,68.59) -- (206.02,68.59);
+\draw (206.02,68.59) -- (207.82,68.59);
+\draw (207.82,68.59) -- (209.62,68.59);
+\draw (209.62,68.59) -- (211.42,68.59);
+\draw (211.42,68.59) -- (213.22,68.59);
+\draw (213.22,68.59) -- (215.02,68.47);
+\draw (215.02,68.47) -- (216.82,67.31);
+\draw (216.82,67.31) -- (218.62,67.31);
+\draw (218.62,67.31) -- (220.42,67.31);
+\draw (220.42,67.31) -- (222.22,67.31);
+\draw (222.22,67.31) -- (224.02,67.31);
+\draw (224.02,67.31) -- (225.82,67.31);
+\draw (225.82,67.31) -- (227.62,66.40);
+\draw (227.62,66.40) -- (229.42,66.40);
+\draw (229.42,66.40) -- (231.22,66.40);
+\draw (231.22,66.40) -- (233.02,66.40);
+\draw (233.02,66.40) -- (234.82,66.40);
+\draw (234.82,66.40) -- (236.62,66.40);
+\draw (236.62,66.40) -- (238.42,66.40);
+\draw (238.42,66.40) -- (240.22,66.40);
+\draw (240.22,66.40) -- (242.02,66.40);
+\draw (242.02,66.40) -- (243.82,65.62);
+\draw (243.82,65.62) -- (245.62,65.62);
+\draw (245.62,65.62) -- (247.42,65.62);
+\draw (247.42,65.62) -- (249.22,65.62);
+\draw (249.22,65.62) -- (251.02,65.62);
+\draw (251.02,65.62) -- (252.82,65.62);
+\draw (252.82,65.62) -- (254.62,65.31);
+\draw (254.62,65.31) -- (256.42,65.31);
+\draw (256.42,65.31) -- (258.22,65.31);
+\draw (258.22,65.31) -- (260.02,65.31);
+\draw (260.02,65.31) -- (261.82,65.31);
+\draw (261.82,65.31) -- (263.62,65.31);
+\draw (263.62,65.31) -- (265.42,65.31);
+\draw (265.42,65.31) -- (267.22,63.56);
+\draw (267.22,63.56) -- (269.02,63.56);
+\draw (269.02,63.56) -- (270.82,63.56);
+\draw (270.82,63.56) -- (272.62,63.56);
+\draw (272.62,63.56) -- (274.42,63.56);
+\draw (274.42,63.56) -- (276.22,63.56);
+\draw (276.22,63.56) -- (278.02,63.56);
+\draw (278.02,63.56) -- (279.82,63.56);
+\draw (279.82,63.56) -- (281.62,63.56);
+\draw (281.62,63.56) -- (283.42,63.56);
+\draw (283.42,63.56) -- (285.23,63.56);
+\draw (285.23,63.56) -- (287.03,63.56);
+\draw (287.03,63.56) -- (288.83,63.56);
+\draw (288.83,63.56) -- (290.63,63.56);
+\draw (290.63,63.56) -- (292.43,63.56);
+\draw (292.43,63.56) -- (294.23,63.56);
+\draw (294.23,63.56) -- (296.03,63.56);
+\draw (296.03,63.56) -- (297.83,63.56);
+\draw (297.83,63.56) -- (299.63,63.56);
+\draw (299.63,63.56) -- (301.43,63.56);
+\draw (301.43,63.56) -- (303.23,63.56);
+\draw (303.23,63.56) -- (305.03,63.56);
+\draw (305.03,63.56) -- (306.83,63.56);
+\draw (306.83,63.56) -- (308.63,63.56);
+\draw (308.63,63.56) -- (310.43,63.56);
+\draw (310.43,63.56) -- (312.23,63.56);
+\draw (312.23,63.56) -- (314.03,63.56);
+\draw (314.03,63.56) -- (315.83,63.56);
+\draw (315.83,63.56) -- (317.63,63.56);
+\draw (317.63,63.56) -- (319.43,63.56);
+\draw (319.43,63.56) -- (321.23,62.99);
+\draw (321.23,62.99) -- (323.03,62.99);
+\draw (323.03,62.99) -- (324.83,62.99);
+\draw (324.83,62.99) -- (326.63,62.36);
+\draw (326.63,62.36) -- (328.43,62.36);
+\draw (328.43,62.36) -- (330.23,62.36);
+\draw (330.23,62.36) -- (332.03,62.36);
+\draw (332.03,62.36) -- (333.83,62.36);
+\draw (333.83,62.36) -- (335.63,62.36);
+\draw (335.63,62.36) -- (337.43,62.36);
+\draw (337.43,62.36) -- (339.23,62.36);
+\draw (339.23,62.36) -- (341.03,62.36);
+\draw (341.03,62.36) -- (342.83,62.36);
+\draw (342.83,62.36) -- (344.63,62.36);
+\draw (344.63,62.36) -- (346.43,62.36);
+\draw (346.43,62.36) -- (348.23,62.36);
+\draw (348.23,62.36) -- (350.03,62.30);
+\draw (350.03,62.30) -- (351.83,62.30);
+\draw (351.83,62.30) -- (353.63,62.30);
+\draw (353.63,62.30) -- (355.43,62.14);
+\draw (355.43,62.14) -- (357.23,62.14);
+\draw (357.23,62.14) -- (359.03,62.14);
+\draw (359.03,62.14) -- (360.83,62.14);
+\draw (360.83,62.14) -- (362.63,62.14);
+\draw (362.63,62.14) -- (364.43,62.14);
+\draw (364.43,62.14) -- (366.23,62.14);
+\draw (366.23,62.14) -- (368.03,62.14);
+\draw (368.03,62.14) -- (369.83,62.14);
+\draw (369.83,62.14) -- (371.63,61.91);
+\draw (371.63,61.91) -- (373.43,61.91);
+\draw (373.43,61.91) -- (375.23,61.50);
+\draw (375.23,61.50) -- (377.03,61.50);
+\draw (377.03,61.50) -- (378.83,61.50);
+\draw (378.83,61.50) -- (380.63,61.50);
+\draw (380.63,61.50) -- (382.43,61.50);
+\draw (382.43,61.50) -- (384.23,61.50);
+\draw (384.23,61.50) -- (386.04,61.50);
+\draw (386.04,61.50) -- (387.84,61.50);
+\draw (387.84,61.50) -- (389.64,61.50);
+\draw (389.64,61.50) -- (391.44,61.50);
+\draw (391.44,61.50) -- (393.24,61.50);
+\draw (393.24,61.50) -- (395.00,61.50);
+\end{tikzpicture}}
+\put(290,172){\makebox(0,0)[l]{\scriptsize reverseRange}}}
+
+\end{picture}}\end{center}
+
+Horizontal axis: iteration. Vertical axis: current closed-tour distance. 
+
     \end{enumerate}
 
     %\newpage
     \item Let us return to the busy beaver numbers.
     \begin{enumerate}
         \item (5 pts) Describe why the busy beaver numbers are incomputable intuitively. What are the practical consequences of this with respect to determining $BB(n)$?
+
+\paragraph{Answer.}
+
+Use the course's step-count convention: BB(n) is the largest number of steps taken before halting by any n-working-state, binary-tape Turing machine started on an all-zero tape; a separate halt state is not counted. This is consistent with the previous assignment's BB(2)=6 convention. It is not the alternative definition that maximizes the number of printed ones.
+
+For each fixed n there are finitely many machines, and finitely many halting times among those that halt, so this maximum is finite. However, simulating all those machines longer and longer cannot in general distinguish a machine that runs forever from one that eventually halts after an enormous delay. A computable maximum halting-time bound would remove that difficulty and decide halting, which is impossible.
+
+Consequently there is no algorithm guaranteed to compute BB(n) for every n. Halting examples establish lower bounds, and longer searches may improve them. A finite cutoff cannot generally prove that all remaining machines fail to halt. An exact value requires ruling out every competing machine above the claimed maximum, typically through proofs of nontermination or bounded halting behavior. Some individual small values can be established; incomputability concerns one uniform algorithm for all n.
+
         \item (10 pts) Show that the busy beaver numbers are incomputable via reduction from a problem discussed in class. In particular, write pseudocode (using Python syntax) showing that a known undecidable problem can be solved assuming the existence of a function \verb|BB(n)| which is guaranteed to halt.
+
+\paragraph{Answer.}
+
+Assume for contradiction that BB(n) is computable and always halts. Given an arbitrary machine M and input w, effectively compile a binary-tape, blank-start machine N that first writes an encoding of w, then simulates M on w. The compiler uses finitely many additional working states and preserves halting: N halts on its blank tape if and only if M halts on w. Count the working states of this constructed machine; do not use the unmodified state count of M.
+
+\begin{lstlisting}
+
+def decideHalting(M, w):
+    N = compileToBinaryBlankStart(M, w)
+    n = numberOfWorkingStates(N)
+    limit = BB(n)
+    config = blankConfiguration(N)
+    if isHalted(config):
+        return True
+    for _ in range(limit):
+        config = step(N, config)
+        if isHalted(config):
+            return True
+    return False
+
+
+\end{lstlisting}
+
+The initial halt check handles zero steps, and checking after each transition includes halting at exactly limit steps. The hypothetical BB call terminates, and the loop is bounded, so decideHalting always terminates. If N halts, its halting time cannot exceed BB(n), and the simulation accepts. If it has not halted within that bound, it cannot halt later without contradicting the definition of BB(n), and the function rejects. Therefore this procedure would decide the general halting problem. Since that problem is undecidable, a total computable BB function cannot exist.
+
+Even restricting to blank-input machines is already undecidable: the input-writing wrapper reduces arbitrary-input halting to blank-input halting. If a different source uses the printed-ones Busy Beaver definition, this particular time-bound loop needs an additional reduction; one must not treat a bound on printed ones as a bound on steps.
+
     \end{enumerate}
     
 \end{enumerate}
 
 
 \end{document}
+
 
 
