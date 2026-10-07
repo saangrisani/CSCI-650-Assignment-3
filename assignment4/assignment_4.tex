@@ -51,7 +51,7 @@
         \item (5 pts) Write a function \verb|totalDistance(D, path)| which returns the total distance a traveling salesman must travel given a sequence of cities. \verb|path| will include each city exactly once, note that the salesman must end at the start city. Submit your code on INGInious and include a code snippet of this function in your PDF submission.
 
 \paragraph{Answer.}
-I add each distance along the route. Then I include the trip back home. That last edge matters. An empty route returns zero.
+The function adds each distance along the route. Then it includes the trip back home. That last edge matters. An empty route returns zero.
 
 \begin{lstlisting}
 def totalDistance(D, path):
@@ -61,12 +61,12 @@ def totalDistance(D, path):
           for j in range(len(path))))
 \end{lstlisting}
 
-I visit each listed edge once. That takes $O(n)$ time and $O(1)$ extra space.
+Each listed edge gets visited once. That takes $O(n)$ time and $O(1)$ extra space.
 
         \item (10 pts) Write a function \verb|nearestNeighbor(D, start)| which returns an order in which to visit cities with associated distance matrix \verb|D| starting at \verb|start| and following the nearest neighbor heuristic. Submit your code on INGInious and include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function?
 
 \paragraph{Answer.}
-I start at the given city. A start of -1 picks one randomly. Then I choose the nearest unvisited city. Ties go to the smaller city index.
+The route starts at the given city. A start of -1 picks one randomly. Each next stop is the nearest unvisited city. Ties go to the smaller city index.
 
 \begin{lstlisting}
 def nearestNeighbor(D, start=-1):
@@ -85,14 +85,14 @@ def nearestNeighbor(D, start=-1):
   return path
 \end{lstlisting}
 
-I check $n-1$ cities, then $n-2$, and so on. These checks add up to $n(n-1)/2$. So the runtime is $\Theta(n^2)$. Matrix access and expected set operations take constant time. I also use $O(n)$ extra space. The greedy choices can miss a better tour.
+The search checks $n-1$ cities, then $n-2$, and so on. These checks add up to $n(n-1)/2$. So the runtime is $\Theta(n^2)$. Matrix access and expected set operations take constant time. The path and remaining set use $O(n)$ extra space. The greedy choices can miss a better tour.
 
         \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate histograms depicting the distribution of ratios (observed distance)/(minimum observed distance) under different circumstances. Describe what you observe.
 
 \paragraph{Answer.}
-I used the supplied tests with seed 65004. I set both NumPy and Python's random seed. Each family has 50 matrices with 100 cities. I tried every start on each matrix. That gives 5,000 ratios per family, using 25 bins.
+I used the supplied tests with seed 65004. Both NumPy and Python's random seed were set. Each family has 50 matrices with 100 cities. Every starting city was tested on each matrix. That gives 5,000 ratios per family, using 25 bins.
 
-I divide each distance by that matrix's best observed distance. This denominator comes from nearest-neighbor tours. It is not necessarily the true minimum.
+Each distance is divided by that matrix's best observed distance. This denominator comes from nearest-neighbor tours. It is not necessarily the true minimum.
 
 \begin{center}\begin{tabular}{lllll}
 
@@ -104,7 +104,7 @@ Barabasi-Albert stays fairly close to one. Its average gap is about 3.45\%. Watt
 
 Uniform Random uses asymmetric distances without guaranteed triangle inequalities. A cheap early choice can leave an expensive return. Trying several starts seems useful here.
 
-I would avoid treating these as independent observations. Starts on one matrix share the same denominator. These samples also cannot prove an approximation guarantee.
+These observations are not independent. Starts on one matrix share the same denominator. These samples also cannot prove an approximation guarantee.
 
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
@@ -349,7 +349,7 @@ The horizontal axis shows the distance ratio. The vertical axis shows probabilit
         Include code snippets of these functions in your PDF submission.
 
 \paragraph{Answer.}
-I copy the path before changing it. That leaves the input alone. Adjacent swaps use consecutive list positions, without wrapping around. For slices, I include both randomly selected endpoints. Paths shorter than two cities stay unchanged.
+Each candidate starts with a copy of the path. That leaves the input alone. Adjacent swaps use consecutive list positions, without wrapping around. Slices include both randomly selected endpoints. Paths shorter than two cities stay unchanged.
 
 \begin{lstlisting}
 def swapPairs(path, numSwaps=1, adj=False):
@@ -394,9 +394,9 @@ With fixed swaps, each function takes $O(n)$ time. Copying the route already tak
         \item (10 pts) Write a function \verb|runSimulatedAnnealing(D, genCandidate, maxIterations, T, alpha)| which finds a path for a traveling salesman using simulated annealing given a distance matrix \verb|D|, a function to generate candidate solutions, a maximum number of iterations to perform, an initial temperature, and a multiplicative update factor for temperature. The initial path should be a random permutation of the cities. Include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function with respect to $n$ (the number of cities) and $i$ (the number of iterations)?
 
 \paragraph{Answer.}
-I begin with a random tour. I always accept equal or shorter candidates. Longer candidates get a chance too. Their acceptance probability is $e^{-\Delta/T}$ when $T>0$. I multiply the temperature by alpha each iteration.
+Annealing begins with a random tour. Equal or shorter candidates are always accepted. Longer candidates get a chance too. Their acceptance probability is $e^{-\Delta/T}$ when $T>0$. The temperature gets multiplied by alpha each iteration.
 
-I track the best tour separately. An accepted uphill move cannot erase that record. At zero temperature, I reject uphill moves. The distance list records each iteration's current distance.
+The best tour stays in a separate record. An accepted uphill move cannot erase that record. At zero temperature, uphill moves are rejected. The distance list records each iteration's current distance.
 
 \begin{lstlisting}
 def runSimulatedAnnealing(D, genCandidate=swapPairs, maxIterations=1000, T=-1, alpha=0.9):
@@ -426,7 +426,7 @@ Those bounds assume at least one city. Including empty inputs gives $O((i+1)(n+1
         \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate plots showing how the total distance of the current solution changes over time. Discuss the results and briefly describe a process for tuning the hyperparameters of this approach.
 
 \paragraph{Answer.}
-I used one 100-city matrix per family. Each candidate method ran for 10,000 iterations. The methods shared a matrix but had different starting tours. I used $T=10$ and $lpha=0.9$.
+Each family used one 100-city matrix. Each candidate method ran for 10,000 iterations. The methods shared a matrix but had different starting tours. The settings were $T=10$ and $\alpha=0.9$.
 
 \begin{center}\begin{tabular}{llll}
 
@@ -442,11 +442,11 @@ The current distance sometimes rises early. That comes from accepting uphill mov
 
 The default cooling gets cold pretty quickly. After 100 updates, $T$ is about $0.000266$. After 200, it is about $7.06\times10^{-9}$. Most remaining iterations behave like greedy improvement.
 
-I would sample uphill changes before choosing a temperature. I could target an initial acceptance probability of 0.8. A typical uphill change helps estimate that temperature.
+Sampling uphill changes helps choose a starting temperature. An initial acceptance probability of 0.8 is one option. A typical uphill change helps estimate that temperature.
 
-I would use $T_0\approx-\Delta_{\mathrm{typical}}/\log(0.8)$. Then I would choose a final temperature. The schedule becomes $\alpha=(T_{\mathrm{final}}/T_0)^{1/i}$. This spreads cooling across the iteration budget.
+I would use $T_0\approx-\Delta_{\mathrm{typical}}/\log(0.8)$. A final temperature sets the other endpoint. The schedule becomes $\alpha=(T_{\mathrm{final}}/T_0)^{1/i}$. This spreads cooling across the iteration budget.
 
-I would compare several seeds under equal evaluation budgets. I would share matrices and starting tours when comparing methods. Then I would check fresh instances. These single runs cannot establish a consistent winner.
+Several seeds should be compared under equal evaluation budgets. Sharing matrices and starting tours makes comparisons fairer. Fresh instances provide a final check. These single runs cannot establish a consistent winner.
 
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
@@ -2805,22 +2805,22 @@ The horizontal axis shows iterations. The vertical axis shows current tour dista
         \item (5 pts) Describe why the busy beaver numbers are incomputable intuitively. What are the practical consequences of this with respect to determining $BB(n)$?
 
 \paragraph{Answer.}
-I use the course's step-count definition of $BB(n)$. It measures the longest halting run among $n$-state machines. They use binary tapes, initially filled with zeros. The separate halt state does not count. This matches the earlier $BB(2)=6$ convention.
+Here, $BB(n)$ uses the course's step-count definition. It measures the longest halting run among $n$-state machines. They use binary tapes, initially filled with zeros. The separate halt state does not count. This matches the earlier $BB(2)=6$ convention.
 
 For fixed n, only finitely many machines exist. Each halting machine has a finite runtime. So the maximum halting time is finite.
 
 The trouble is identifying every machine that never halts. Running one longer does not settle that question. It might still halt much later. A computable time bound would decide halting. That is impossible.
 
-I can find lower bounds using halting examples. Longer searches might improve those bounds. A cutoff cannot generally establish the exact maximum. I need proofs covering the remaining machines. Some small values can be established. No single algorithm can compute every $BB(n)$.
+Halting examples provide lower bounds. Longer searches might improve those bounds. A cutoff cannot generally establish the exact maximum. Exact values need proofs covering the remaining machines. Some small values can be established. No single algorithm can compute every $BB(n)$.
 
         \item (10 pts) Show that the busy beaver numbers are incomputable via reduction from a problem discussed in class. In particular, write pseudocode (using Python syntax) showing that a known undecidable problem can be solved assuming the existence of a function \verb|BB(n)| which is guaranteed to halt.
 
 \paragraph{Answer.}
-I assume $BB(n)$ is computable and always halts. I would use it to decide the halting problem.
+Suppose $BB(n)$ is computable and always halts. That would let the halting problem be decided.
 
-I start with a machine M and input w. I construct a blank-start, binary-tape machine N. It first writes an encoding of w. Then it simulates M on that input. This finite construction preserves whether the machine halts.
+Start with a machine M and input w. Construct a blank-start, binary-tape machine N. It first writes an encoding of w. Then it simulates M on that input. This finite construction preserves whether the machine halts.
 
-I count N's working states, including the added setup states. Using only M's original state count would be wrong.
+Count N's working states, including the added setup states. Using only M's original state count would be wrong.
 
 \begin{lstlisting}
 
