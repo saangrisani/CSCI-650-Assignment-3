@@ -51,8 +51,7 @@
         \item (5 pts) Write a function \verb|totalDistance(D, path)| which returns the total distance a traveling salesman must travel given a sequence of cities. \verb|path| will include each city exactly once, note that the salesman must end at the start city. Submit your code on INGInious and include a code snippet of this function in your PDF submission.
 
 \paragraph{Answer.}
-
-The route lists each city once. Sum the directed distances between consecutive cities and include the final edge back to the first city. Empty routes have distance zero. The calculation takes O(n) time and O(1) auxiliary space.
+I add each distance along the route. Then I include the trip back home. That last edge matters. An empty route returns zero.
 
 \begin{lstlisting}
 def totalDistance(D, path):
@@ -62,11 +61,12 @@ def totalDistance(D, path):
           for j in range(len(path))))
 \end{lstlisting}
 
+I visit each listed edge once. That takes $O(n)$ time and $O(1)$ extra space.
+
         \item (10 pts) Write a function \verb|nearestNeighbor(D, start)| which returns an order in which to visit cities with associated distance matrix \verb|D| starting at \verb|start| and following the nearest neighbor heuristic. Submit your code on INGInious and include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function?
 
 \paragraph{Answer.}
-
-Start at the requested city, or choose a random city when start is -1. Repeatedly select the closest unvisited city; ties go to the smaller city index. The returned route contains each city exactly once.
+I start at the given city. A start of -1 picks one randomly. Then I choose the nearest unvisited city. Ties go to the smaller city index.
 
 \begin{lstlisting}
 def nearestNeighbor(D, start=-1):
@@ -85,13 +85,14 @@ def nearestNeighbor(D, start=-1):
   return path
 \end{lstlisting}
 
-At successive steps the algorithm examines n-1, n-2, ..., 1 remaining cities. Their sum is n(n-1)/2, so the runtime is Theta(n squared), assuming constant-time matrix access and expected constant-time set operations. Auxiliary space is O(n). This greedy rule does not guarantee an optimal tour.
+I check $n-1$ cities, then $n-2$, and so on. These checks add up to $n(n-1)/2$. So the runtime is $\Theta(n^2)$. Matrix access and expected set operations take constant time. I also use $O(n)$ extra space. The greedy choices can miss a better tour.
 
         \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate histograms depicting the distribution of ratios (observed distance)/(minimum observed distance) under different circumstances. Describe what you observe.
 
 \paragraph{Answer.}
+I used the supplied tests with seed 65004. I set both NumPy and Python's random seed. Each family has 50 matrices with 100 cities. I tried every start on each matrix. That gives 5,000 ratios per family, using 25 bins.
 
-The supplied tests used NumPy and Python random seeds of 65004. Each of three families used 50 independently generated distance matrices with 100 cities. Each matrix was tested at every starting city, yielding 5,000 ratios per family and 25 histogram bins. Each denominator is the minimum nearest-neighbor tour observed on that matrix, not a proven optimal TSP distance.
+I divide each distance by that matrix's best observed distance. This denominator comes from nearest-neighbor tours. It is not necessarily the true minimum.
 
 \begin{center}\begin{tabular}{lllll}
 
@@ -99,9 +100,12 @@ Family & Mean & Median & 95th percentile & Maximum \\ Barabasi-Albert & 1.034 & 
 
 \end{tabular}\end{center}
 
-Barabasi-Albert ratios cluster tightly near 1: the average tour is about 3.45\% longer than the best start for its matrix. Watts-Strogatz has a wider distribution, averaging about 9.20\% above its best start. Uniform Random is much more sensitive to start: the mean is about 42.09\% above the best observed start, with a maximum ratio of 2.188. The uniform matrices are asymmetric and need not satisfy the triangle inequality; an inexpensive greedy edge can leave an expensive closing edge.
+Barabasi-Albert stays fairly close to one. Its average gap is about 3.45\%. Watts-Strogatz spreads out more, averaging about 9.20\%. Uniform Random varies much more between starts. Its average gap is about 42.09\%. The largest ratio reaches 2.188.
 
-All starts on one matrix share its denominator and are dependent observations. These histograms describe these sampled instances; they do not establish approximation guarantees. Trying several starts can improve the observed nearest-neighbor result.
+Uniform Random uses asymmetric distances without guaranteed triangle inequalities. A cheap early choice can leave an expensive return. Trying several starts seems useful here.
+
+I would avoid treating these as independent observations. Starts on one matrix share the same denominator. These samples also cannot prove an approximation guarantee.
+
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
 \put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
@@ -178,7 +182,8 @@ All starts on one matrix share its denominator and are dependent observations. T
 
 \end{picture}}\end{center}
 
-Horizontal axis: tour distance / minimum distance on the same matrix. Vertical axis: probability density, matching density=True in the supplied script.
+The horizontal axis shows the distance ratio. The vertical axis shows probability density.
+
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
 \put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
@@ -255,7 +260,8 @@ Horizontal axis: tour distance / minimum distance on the same matrix. Vertical a
 
 \end{picture}}\end{center}
 
-Horizontal axis: tour distance / minimum distance on the same matrix. Vertical axis: probability density, matching density=True in the supplied script.
+The horizontal axis shows the distance ratio. The vertical axis shows probability density.
+
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
 \put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
@@ -332,7 +338,7 @@ Horizontal axis: tour distance / minimum distance on the same matrix. Vertical a
 
 \end{picture}}\end{center}
 
-Horizontal axis: tour distance / minimum distance on the same matrix. Vertical axis: probability density, matching density=True in the supplied script.
+The horizontal axis shows the distance ratio. The vertical axis shows probability density.
 
         \item (5 pts) Write three functions to generate candidate solutions.
         \begin{itemize}
@@ -343,8 +349,7 @@ Horizontal axis: tour distance / minimum distance on the same matrix. Vertical a
         Include code snippets of these functions in your PDF submission.
 
 \paragraph{Answer.}
-
-Each function copies its input and preserves the route's city multiset. For adjacent swaps I use consecutive list indices, without wrapping the last index to the first. The range functions choose distinct endpoints and include both endpoints. Paths with fewer than two cities return a copy unchanged.
+I copy the path before changing it. That leaves the input alone. Adjacent swaps use consecutive list positions, without wrapping around. For slices, I include both randomly selected endpoints. Paths shorter than two cities stay unchanged.
 
 \begin{lstlisting}
 def swapPairs(path, numSwaps=1, adj=False):
@@ -382,13 +387,16 @@ def reverseRange(path):
   return candidate
 \end{lstlisting}
 
-A random permutation may return the original slice; multiple swaps may undo one another. Such proposals remain valid. With a fixed number of swaps, all three functions take O(n) time because they copy the route. NumPy choice without replacement may construct a permutation of the population, so a conservative bound for swapPairs is O(n*(1+numSwaps)) in general. Each uses O(n) auxiliary space.
+Shuffling can leave a slice unchanged. Several swaps can also undo earlier swaps. Both still produce valid candidates.
+
+With fixed swaps, each function takes $O(n)$ time. Copying the route already takes that long. NumPy's sampling may build a full permutation. For $s$ swaps, a conservative bound is $O(n(1+s))$. Extra space is $O(n)$.
 
         \item (10 pts) Write a function \verb|runSimulatedAnnealing(D, genCandidate, maxIterations, T, alpha)| which finds a path for a traveling salesman using simulated annealing given a distance matrix \verb|D|, a function to generate candidate solutions, a maximum number of iterations to perform, an initial temperature, and a multiplicative update factor for temperature. The initial path should be a random permutation of the cities. Include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function with respect to $n$ (the number of cities) and $i$ (the number of iterations)?
 
 \paragraph{Answer.}
+I begin with a random tour. I always accept equal or shorter candidates. Longer candidates get a chance too. Their acceptance probability is $e^{-\Delta/T}$ when $T>0$. I multiply the temperature by alpha each iteration.
 
-Initialize with a random permutation. Always accept a candidate of equal or lower distance. Accept an uphill change of size delta with probability exp(-delta/T) when T is positive. Multiply T by alpha after each iteration. Keep the best-ever tour separately from the current tour; uphill moves may worsen the current tour. At T=0 only non-increasing moves are accepted. distList records the current distance after each iteration, and has exactly maxIterations entries.
+I track the best tour separately. An accepted uphill move cannot erase that record. At zero temperature, I reject uphill moves. The distance list records each iteration's current distance.
 
 \begin{lstlisting}
 def runSimulatedAnnealing(D, genCandidate=swapPairs, maxIterations=1000, T=-1, alpha=0.9):
@@ -411,13 +419,14 @@ def runSimulatedAnnealing(D, genCandidate=swapPairs, maxIterations=1000, T=-1, a
   return bestPath, bestDist, distList
 \end{lstlisting}
 
-For the provided candidate functions, candidate construction, tour scoring, and any route copy each take O(n) time. Thus i iterations take O(n + i*n), or O((i+1)*n), for n at least 1. Including degenerate empty inputs gives O((i+1)*(n+1)). Auxiliary space is O(n+i), including the returned distance history. With a general generator taking G(n) time, the bound becomes O(n + i*(n+G(n))).
+Each provided generator takes $O(n)$ time. Scoring and copying routes also take $O(n)$. For $i$ iterations, the runtime is $O(n+in)$. Extra space is $O(n+i)$, including the history.
+
+Those bounds assume at least one city. Including empty inputs gives $O((i+1)(n+1))$ time. For a general generator taking $G(n)$ time, the runtime becomes $O(n+i(n+G(n)))$.
 
         \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate plots showing how the total distance of the current solution changes over time. Discuss the results and briefly describe a process for tuning the hyperparameters of this approach.
 
 \paragraph{Answer.}
-
-For each family the supplied script generates one 100-city matrix and runs each candidate function for 10,000 iterations on that same matrix. Each run has its own random initial tour, T=10, and alpha=0.9. These are single runs per combination, so the comparison is descriptive and is confounded by different initial tours.
+I used one 100-city matrix per family. Each candidate method ran for 10,000 iterations. The methods shared a matrix but had different starting tours. I used $T=10$ and $lpha=0.9$.
 
 \begin{center}\begin{tabular}{llll}
 
@@ -425,12 +434,19 @@ Family & Generator & Initial & Best / final \\ Barabasi-Albert & swapPairs & 239
 
 \end{tabular}\end{center}
 
-All runs improve substantially and end at their best recorded distances in this experiment. Reversal performs best on the two symmetric graph-distance instances (112 and 121), while pair swaps perform best on the asymmetric uniform instance (10.147). In a symmetric matrix, reversing a segment preserves its internal edge costs and changes just the boundary edges, resembling a 2-opt move. In an asymmetric matrix, reversal also reverses all its internal arcs and can be much more disruptive. Large random permutations often disturb many good edges.
+All nine runs improved their starting distances. Each finished at its best recorded distance. Reversal did best on both symmetric graph instances. Its distances were 112 and 121. Pair swaps won on Uniform Random, reaching 10.147.
 
-The plotted current distance can rise during early uphill acceptances, but settles into a mostly decreasing staircase as cooling proceeds. The default cools rapidly: T after 100 updates is about 0.000266, and after 200 about 0.00000000706. Almost all the 10,000 iterations therefore behave like greedy local improvement. A late plateau indicates that accepted improvements are rare under this schedule; it does not certify optimality.
+Reversing a symmetric segment preserves its internal edge costs. Only the boundary costs can change. Asymmetric distances make reversal more disruptive. Internal arcs change direction too. A large permutation can disturb many good edges.
 
-To tune, first sample positive candidate distance changes and choose T0 near -delta\_typical / log(p0), for example p0=0.8. Choose a final temperature and set $\alpha=(T_{\mathrm{final}}/T_0)^{1/i}$ so cooling spans the actual iteration budget. Compare multiple candidate operators, temperatures, schedules, and restart counts using equal evaluation budgets and repeated paired seeds on the same matrices and initial tours. Compare the distribution of best distances and runtime, then evaluate the chosen setting on fresh instances. Slower cooling may help escape local minima but is not guaranteed to improve every run.
+The current distance sometimes rises early. That comes from accepting uphill moves. Later, the curves mostly decrease in steps. A plateau does not prove optimality.
 
+The default cooling gets cold pretty quickly. After 100 updates, $T$ is about $0.000266$. After 200, it is about $7.06\times10^{-9}$. Most remaining iterations behave like greedy improvement.
+
+I would sample uphill changes before choosing a temperature. I could target an initial acceptance probability of 0.8. A typical uphill change helps estimate that temperature.
+
+I would use $T_0\approx-\Delta_{\mathrm{typical}}/\log(0.8)$. Then I would choose a final temperature. The schedule becomes $\alpha=(T_{\mathrm{final}}/T_0)^{1/i}$. This spreads cooling across the iteration budget.
+
+I would compare several seeds under equal evaluation budgets. I would share matrices and starting tours when comparing methods. Then I would check fresh instances. These single runs cannot establish a consistent winner.
 
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
@@ -1213,7 +1229,8 @@ To tune, first sample positive candidate distance changes and choose T0 near -de
 
 \end{picture}}\end{center}
 
-Horizontal axis: iteration. Vertical axis: current closed-tour distance. 
+The horizontal axis shows iterations. The vertical axis shows current tour distance.
+
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
 \put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
@@ -1995,7 +2012,8 @@ Horizontal axis: iteration. Vertical axis: current closed-tour distance.
 
 \end{picture}}\end{center}
 
-Horizontal axis: iteration. Vertical axis: current closed-tour distance. 
+The horizontal axis shows iterations. The vertical axis shows current tour distance.
+
 \begin{center}\resizebox{\linewidth}{!}{\setlength{\unitlength}{1pt}\begin{picture}(420,190)
 
 \put(35,25){\line(1,0){360}}\put(35,25){\line(0,1){125}}
@@ -2777,7 +2795,7 @@ Horizontal axis: iteration. Vertical axis: current closed-tour distance.
 
 \end{picture}}\end{center}
 
-Horizontal axis: iteration. Vertical axis: current closed-tour distance. 
+The horizontal axis shows iterations. The vertical axis shows current tour distance.
 
     \end{enumerate}
 
@@ -2787,18 +2805,22 @@ Horizontal axis: iteration. Vertical axis: current closed-tour distance.
         \item (5 pts) Describe why the busy beaver numbers are incomputable intuitively. What are the practical consequences of this with respect to determining $BB(n)$?
 
 \paragraph{Answer.}
+I use the course's step-count definition of $BB(n)$. It measures the longest halting run among $n$-state machines. They use binary tapes, initially filled with zeros. The separate halt state does not count. This matches the earlier $BB(2)=6$ convention.
 
-Use the course's step-count convention: BB(n) is the largest number of steps taken before halting by any n-working-state, binary-tape Turing machine started on an all-zero tape; a separate halt state is not counted. This is consistent with the previous assignment's BB(2)=6 convention. It is not the alternative definition that maximizes the number of printed ones.
+For fixed n, only finitely many machines exist. Each halting machine has a finite runtime. So the maximum halting time is finite.
 
-For each fixed n there are finitely many machines, and finitely many halting times among those that halt, so this maximum is finite. However, simulating all those machines longer and longer cannot in general distinguish a machine that runs forever from one that eventually halts after an enormous delay. A computable maximum halting-time bound would remove that difficulty and decide halting, which is impossible.
+The trouble is identifying every machine that never halts. Running one longer does not settle that question. It might still halt much later. A computable time bound would decide halting. That is impossible.
 
-Consequently there is no algorithm guaranteed to compute BB(n) for every n. Halting examples establish lower bounds, and longer searches may improve them. A finite cutoff cannot generally prove that all remaining machines fail to halt. An exact value requires ruling out every competing machine above the claimed maximum, typically through proofs of nontermination or bounded halting behavior. Some individual small values can be established; incomputability concerns one uniform algorithm for all n.
+I can find lower bounds using halting examples. Longer searches might improve those bounds. A cutoff cannot generally establish the exact maximum. I need proofs covering the remaining machines. Some small values can be established. No single algorithm can compute every $BB(n)$.
 
         \item (10 pts) Show that the busy beaver numbers are incomputable via reduction from a problem discussed in class. In particular, write pseudocode (using Python syntax) showing that a known undecidable problem can be solved assuming the existence of a function \verb|BB(n)| which is guaranteed to halt.
 
 \paragraph{Answer.}
+I assume $BB(n)$ is computable and always halts. I would use it to decide the halting problem.
 
-Assume for contradiction that BB(n) is computable and always halts. Given an arbitrary machine M and input w, effectively compile a binary-tape, blank-start machine N that first writes an encoding of w, then simulates M on w. The compiler uses finitely many additional working states and preserves halting: N halts on its blank tape if and only if M halts on w. Count the working states of this constructed machine; do not use the unmodified state count of M.
+I start with a machine M and input w. I construct a blank-start, binary-tape machine N. It first writes an encoding of w. Then it simulates M on that input. This finite construction preserves whether the machine halts.
+
+I count N's working states, including the added setup states. Using only M's original state count would be wrong.
 
 \begin{lstlisting}
 
@@ -2818,9 +2840,13 @@ def decideHalting(M, w):
 
 \end{lstlisting}
 
-The initial halt check handles zero steps, and checking after each transition includes halting at exactly limit steps. The hypothetical BB call terminates, and the loop is bounded, so decideHalting always terminates. If N halts, its halting time cannot exceed BB(n), and the simulation accepts. If it has not halted within that bound, it cannot halt later without contradicting the definition of BB(n), and the function rejects. Therefore this procedure would decide the general halting problem. Since that problem is undecidable, a total computable BB function cannot exist.
+The initial check covers halting without any transitions. Each later check follows a simulated transition. That includes halting exactly at the bound.
 
-Even restricting to blank-input machines is already undecidable: the input-writing wrapper reduces arbitrary-input halting to blank-input halting. If a different source uses the printed-ones Busy Beaver definition, this particular time-bound loop needs an additional reduction; one must not treat a bound on printed ones as a bound on steps.
+If N halts, its runtime cannot exceed $BB(n)$. If it survives that bound, it cannot halt later. Otherwise it would exceed the maximum. The procedure therefore answers halting correctly.
+
+The assumed BB call terminates. The bounded simulation also terminates. Together they would decide an undecidable problem. So a total computable BB function cannot exist.
+
+This argument uses halting time, not printed-one counts. A bound on printed ones needs a different reduction. It cannot directly bound the number of steps.
 
     \end{enumerate}
     
