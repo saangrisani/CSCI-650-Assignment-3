@@ -1,0 +1,75 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{ latexsym }
+\usepackage{graphicx}
+\graphicspath{ {../Figures/} }
+
+\usepackage{amsmath}
+\usepackage[a4paper, total={6.2in, 8in}]{geometry}
+
+\usepackage[usenames,dvipsnames]{color}
+\definecolor{darkblue}{rgb}{0,0,.6}
+\definecolor{darkred}{rgb}{.7,0,0}
+\definecolor{darkgreen}{rgb}{0,.6,0}
+\definecolor{red}{rgb}{.98,0,0}
+\usepackage[colorlinks,pagebackref,pdfusetitle,urlcolor=darkblue,citecolor=darkblue,linkcolor=darkred,bookmarksnumbered,plainpages=false]{hyperref}
+\usepackage{amsthm}
+\newtheorem*{definition}{Definition}
+
+\title{CSCI 650 - Algorithms and Computability \\ Assignment 4}
+\author{ }
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+
+
+\noindent Solutions to the written questions on this assignment should be submitted via PDF to Canvas before \textbf{October 13th at 11:59 pm}. Implementations for question 1 should be submitted to INGInious by the same deadline. Make sure to justify your answers. \\
+
+\noindent I highly encourage you to collaborate with one another. However, you must write up your own solutions \textbf{independently}. Feel free to communicate via \href{https://discord.gg/xfBWWkbm2P}{Discord} and to post questions on the appropriate forum in Canvas. Do not post solutions. \\
+
+\noindent Have fun!
+
+
+\section*{Problems}
+
+
+\begin{enumerate}
+    \item In this problem we will develop and analyze two heuristic approaches to solving the \href{https://en.wikipedia.org/wiki/Travelling_salesman_problem|}{Traveling Salesman problem}, one using nearest neighbors and the other using simulated annealing.
+
+    \begin{center}
+        \includegraphics[scale=0.5]{CSCI_650/Figures/xkcd_travelling_salesman_problem.png}
+    \end{center}
+    {\tiny{\url{https://xkcd.com/399/}}}
+    
+    \begin{enumerate}
+        \item (5 pts) Write a function \verb|totalDistance(D, path)| which returns the total distance a traveling salesman must travel given a sequence of cities. \verb|path| will include each city exactly once, note that the salesman must end at the start city. Submit your code on INGInious and include a code snippet of this function in your PDF submission.
+        \item (10 pts) Write a function \verb|nearestNeighbor(D, start)| which returns an order in which to visit cities with associated distance matrix \verb|D| starting at \verb|start| and following the nearest neighbor heuristic. Submit your code on INGInious and include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function?
+        \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate histograms depicting the distribution of ratios (observed distance)/(minimum observed distance) under different circumstances. Describe what you observe.
+        \item (5 pts) Write three functions to generate candidate solutions.
+        \begin{itemize}
+            \item \verb|swapPairs(path, numSwaps, adj)| swaps \verb|numSwaps| random pairs of elements in \verb|path|. If \verb|adj| is \verb|True|, only swap adjacent pairs of elements in the current path.
+            \item \verb|permuteRange(path)| randomly permutes a slice of \verb|path| between two randomly selected indices.
+            \item \verb|reverseRange(path)| reverses a slice of \verb|path| between two randomly selected indices.
+        \end{itemize}
+        Include code snippets of these functions in your PDF submission.
+        \item (10 pts) Write a function \verb|runSimulatedAnnealing(D, genCandidate, maxIterations, T, alpha)| which finds a path for a traveling salesman using simulated annealing given a distance matrix \verb|D|, a function to generate candidate solutions, a maximum number of iterations to perform, an initial temperature, and a multiplicative update factor for temperature. The initial path should be a random permutation of the cities. Include a code snippet of this function in your PDF submission. What is the asymptotic runtime of this function with respect to $n$ (the number of cities) and $i$ (the number of iterations)?
+        \item (5 pts) Use the \verb|tspTests.py| script provided on Canvas to generate plots showing how the total distance of the current solution changes over time. Discuss the results and briefly describe a process for tuning the hyperparameters of this approach.
+    \end{enumerate}
+
+    %\newpage
+    \item Let us return to the busy beaver numbers.
+    \begin{enumerate}
+        \item (5 pts) Describe why the busy beaver numbers are incomputable intuitively. What are the practical consequences of this with respect to determining $BB(n)$?
+        \item (10 pts) Show that the busy beaver numbers are incomputable via reduction from a problem discussed in class. In particular, write pseudocode (using Python syntax) showing that a known undecidable problem can be solved assuming the existence of a function \verb|BB(n)| which is guaranteed to halt.
+    \end{enumerate}
+    
+\end{enumerate}
+
+
+\end{document}
+
+

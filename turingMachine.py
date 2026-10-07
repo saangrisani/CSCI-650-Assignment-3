@@ -1,6 +1,7 @@
 # CSCI 650
 # An Implementation of a Simple Turing Machine Skeleton
 # Author: Carter Tillquist
+#Co-Author: Sean Angrisani
 
 from collections import Counter
 from itertools import product
