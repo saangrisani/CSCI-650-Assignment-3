@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{ latexsym }
+\usepackage{blkarray}
+\usepackage{graphicx}
+\graphicspath{ {../Figures/} }
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem*{theorem*}{Theorem}
+
+\usepackage[a4paper, total={6.2in, 8in}]{geometry}
+
+\usepackage[usenames,dvipsnames]{color}
+\definecolor{darkblue}{rgb}{0,0,.6}
+\definecolor{darkred}{rgb}{.7,0,0}
+\definecolor{darkgreen}{rgb}{0,.6,0}
+\definecolor{red}{rgb}{.98,0,0}
+\usepackage[colorlinks,pagebackref,pdfusetitle,urlcolor=darkblue,citecolor=darkblue,linkcolor=darkred,bookmarksnumbered,plainpages=false]{hyperref}
+\usepackage{amsthm}
+\newtheorem*{definition}{Definition}
+
+\title{CSCI 650 - Algorithms and Computability \\ Exam 2 - Written and Coding Questions}
+\author{ }
+\date{}
+
+\begin{document}
+
+\maketitle
+
+
+\noindent Solutions to the written portion of the exam along with relevant figures should be submitted via PDF to Canvas. Make sure to \textbf{justify your answers}. Code should be submitted on INGInious. The exam will close on \textbf{October 18th at 11:59 pm}. \\ 
+
+\noindent You must complete solutions to these problems \textbf{individually}. You may ask and answer questions on \href{https://discord.gg/xfBWWkbm2P}{Discord} or Canvas meant to clarify the problems but you may not discuss or post solutions. You are allowed to use your notes, material posted on Canvas, and the textbook (\textit{Introduction to Algorithms}, 3rd edition) during the exam. You may also reference documentation related to specific syntax or function parameters and output (not source code) if necessary. However, you \textbf{are not permitted} to use any other resources. This includes ChatGPT, Google, Stack Overflow, and all other tools, websites, and documents available online. \\
+
+\noindent Good luck!\\
+
+\section*{Problems}
+
+\begin{enumerate}
+    \item The dominating set problem is defined as follows.
+    \begin{definition}[Dominating Set]
+    Given a graph $G=(V,E)$, a \textbf{dominating set} is a set $D \subseteq V$ such that, for all $v \in V$, either $v \in D$ or $\{u,v\} \in E$ where $u \in D$. 
+    \end{definition}
+    
+    \noindent \textbf{The Dominating Set Problem} \\
+    \noindent \textbf{Input:} A graph $G=(V,E)$ and an integer $k$.\\
+    \noindent \textbf{Output:} True if and only if there is a dominating set $D$ of $G$ such that $|D| \leq k$. 
+    \begin{enumerate}
+        \item (10 pts) Write a function \verb|checkDominatingSet(G, D, k)| that returns \verb|True| if $D$ is a dominating set of $G$ of size $k$ or less and \verb|False| otherwise. Note that $G$ may not be connected. Submit your code on INGInious and include a code snippet of this function in your PDF submission. \verb|dominatingSetTests.py|, a script meant to help with local testing, is available on Canvas. What is the runtime of this function?
+        \item (5 pts) Complete an argument that dominating set is NP-complete by selecting a known NP-complete problem (one that we have discussed in class) and writing pseudocode for a polynomial time function solving this problem assuming access to a function \verb|findDominatingSet(G)| that is guaranteed to return a minimum dominating set of $G$. What is the runtime of this function? \\
+    \end{enumerate}
+
+    \newpage 
+    \item Implement a greedy approximation for the dominating set problem.
+    \begin{enumerate}
+        \item (10 pts) Write a function \verb|greedyDominatingSet(G)| that uses a greedy approach to find a dominating set of \verb|G|. Submit your code on INGInious and include a code snippet of this function in your PDF submission. \verb|dominatingSetTests.py|, a script meant to help with local testing, is available on Canvas. What is the runtime of this function?
+        \item (5 pts) Come up with a small specific example showing that the greedy algorithm does not guarantee a minimal dominating set. Show a dominating set of minimum size and show the sequence of steps that the greedy algorithm would take.
+    \end{enumerate}
+
+    \item Use genetic algorithms to find small dominating sets. Answer each of the following questions \textbf{briefly} but completely.
+    \begin{enumerate}
+        \item (2 pts) What do the individuals in the population look like? What does each piece mean? Include a code snippet of a function to create a random individual.
+        \item (2 pts) How are mutation and recombination achieved? Include code snippets of a selection function and a recombination function.
+        \item (3 pts) How is fitness evaluated? Include a code snippet of a function for calculating the fitness of a single individual.
+        \item (3 pts) Create a figure showing the maximum, average, and minimum fitness values for a population of size 50 over 1000 generations trying to find a dominating set on a path of length 100. Depending on your approach, fitness values may not increase smoothly. Describe and interpret your observations.
+    \end{enumerate}
+        
+
+    
+\end{enumerate}
+
+\end{document}
+

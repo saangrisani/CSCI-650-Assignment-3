@@ -1,0 +1,54 @@
+{
+  "verifier_comparisons": 33873,
+  "graph_atlas_max_vertices": 6,
+  "additional_GA_and_operator_checks": "passed",
+  "counterexample": {
+    "nodes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "edges": [
+      [
+        0,
+        4
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ]
+    ],
+    "greedy": [
+      4,
+      0,
+      1
+    ],
+    "optimum": [
+      0,
+      1
+    ]
+  }
+}
