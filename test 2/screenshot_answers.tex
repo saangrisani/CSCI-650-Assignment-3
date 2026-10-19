@@ -1,0 +1,62 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage[margin=1in]{geometry}
+\title{Written Answers}
+\author{Sean Angrisani}
+\date{October 18, 2026}
+\begin{document}
+\maketitle
+
+\section*{Question 1}
+The given languages are
+\[
+L_1=\{\epsilon,aa,bc,a\},\qquad
+L_2=\{bcb,c,aa\},\qquad
+L_3=\{a,aa,abc\}.
+\]
+
+\subsection*{(a) $(L_2\cap L_1)L_3$}
+I first find the strings shared by $L_2$ and $L_1$. The only common string is $aa$, so
+\[
+L_2\cap L_1=\{aa\}.
+\]
+I then concatenate $aa$ with each string in $L_3$:
+\[
+aa\cdot a=aaa,\qquad aa\cdot aa=aaaa,\qquad aa\cdot abc=aaabc.
+\]
+Therefore,
+\[
+\boxed{(L_2\cap L_1)L_3=\{aaa,aaaa,aaabc\}.}
+\]
+
+\subsection*{(b) $L_2(L_1-L_3)$}
+I first remove from $L_1$ every string that also appears in $L_3$. Both $a$ and $aa$ are removed, leaving
+\[
+L_1-L_3=\{\epsilon,bc\}.
+\]
+I then concatenate each string in $L_2$ with both remaining strings. Concatenating with $\epsilon$ leaves a string unchanged:
+\[
+\begin{aligned}
+bcb\cdot\epsilon&=bcb, & bcb\cdot bc&=bcbbc,\\
+c\cdot\epsilon&=c, & c\cdot bc&=cbc,\\
+aa\cdot\epsilon&=aa, & aa\cdot bc&=aabc.
+\end{aligned}
+\]
+Therefore,
+\[
+\boxed{L_2(L_1-L_3)=\{bcb,bcbbc,c,cbc,aa,aabc\}.}
+\]
+
+\clearpage
+\section*{Question 6}
+My favorite problem is the Traveling Salesman Problem. Its decision version is NP-complete: given a collection of locations, travel costs, and a bound $B$, does a tour exist that visits every location once, returns to the start, and costs at most $B$? Finding the shortest such tour is the NP-hard optimization version.
+
+I like this problem because I can connect it to my girlfriend's uncle's work with a DJI drone. He uses a predefined flight to capture images of an area, then uploads them to create a map and locate features such as individual rocks. If the required capture locations are fixed, choosing an efficient order to visit them and return to the launch point is a TSP-style routing problem. The mapping and coordinate calculations are separate, but the flight-planning connection makes the problem feel practical to me.
+
+\section*{Question 7}
+The topic I found most interesting in the second part of the semester was NP-completeness, especially polynomial-time reductions. I liked seeing how problems that initially look unrelated can share the same underlying difficulty. TSP stood out because I could connect it to planning an efficient drone flight, rather than thinking about it only as an abstract graph problem. I also found it interesting that checking a proposed route against a distance bound can be straightforward even when finding the best route is much harder.
+
+My least favorite topic was filling out CYK tables by hand. I understand how the table determines whether a string belongs to a context-free language, but checking every split and production became repetitive. I preferred the reductions and optimization problems because I found their applications more engaging.
+
+\end{document}
