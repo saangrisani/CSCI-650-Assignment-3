@@ -1,0 +1,63 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+
+\title{CSCI 650 --- Quiz 4}
+\author{Sean Angrisani}
+\date{October 3, 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Question 1 \hfill 2 pts}
+Decision problems
+\begin{enumerate}
+    \item can be framed as membership tests (e.g.\ is $w\in L$?).
+    \item are associated with a language of finite size.
+    \item are NP-complete.
+    \item can be solved with context-free grammars.
+\end{enumerate}
+
+\noindent\textbf{Answer: Choice 1.}
+Decision problems can be framed as membership tests.
+The language contains all yes-instance encodings.
+Membership answers that yes-or-no question.
+
+\section*{Question 2 \hfill 4 pts}
+Is the string $w=0010$ part of the language associated with the
+context-free grammar below? Show a completed table following the
+CYK algorithm.
+\[
+\begin{aligned}
+S &\to AA\mid BB\mid BA\mid\epsilon,\\
+A &\to AB\mid 1,\\
+B &\to BA\mid 0.
+\end{aligned}
+\]
+
+\noindent\textbf{Answer: Yes, $0010\in L(G)$.}
+The table uses one-based substring endpoints.
+Cells list generating variables.
+The diagonal represents individual input symbols.
+Lower entries are unused.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{c|cccc}
+$i\backslash j$ & $1\ (0)$ & $2\ (0)$ & $3\ (1)$ & $4\ (0)$ \\ \hline
+$1\ (0)$ & $\{B\}$ & $\{S\}$ & $\{S\}$ & $\{S\}$ \\
+$2\ (0)$ & --- & $\{B\}$ & $\{S,B\}$ & $\{S,B\}$ \\
+$3\ (1)$ & --- & --- & $\{A\}$ & $\{A\}$ \\
+$4\ (0)$ & --- & --- & --- & $\{B\}$
+\end{tabular}
+\end{center}
+
+The full-string cell contains $S$.
+The empty production does not contribute here.
+One derivation confirms membership.
+\[
+S\Rightarrow BB\Rightarrow 0B\Rightarrow 0BA\Rightarrow 00A
+ \Rightarrow 00AB\Rightarrow 001B\Rightarrow 0010.
+\]
+
+\end{document}
