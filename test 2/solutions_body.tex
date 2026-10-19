@@ -3,7 +3,7 @@
 \section*{Solutions}
 \small
 \subsection*{1(a). Verifying a dominating set}
-Let $n=|V|$ and $m=|E|$. First check the size and that every chosen vertex belongs to the graph. Then take the union of the chosen vertices' closed neighborhoods. The answer is true exactly when that union is all of $V$. Isolated vertices are included in $H$ and must themselves be selected; connectivity is not assumed.
+Let $n=|V|$ and $m=|E|$. I first check that $D$ has at most $k$ vertices and contains only vertices in the graph. I then collect the selected vertices and all their neighbors. If this covers all of $V$, I return true. This also handles disconnected graphs: an isolated vertex must be selected because it has no neighbor that could cover it.
 \begin{lstlisting}[language=Python]
 def checkDominatingSet(G, D, k):
   #you may, but are not required to, convert G to a networkx graph
@@ -23,7 +23,7 @@ def checkDominatingSet(G, D, k):
 If the function returns true, each vertex is selected or adjacent to a selected vertex, and the size bound holds. Conversely, a dominating set of size at most $k$ passes the size and membership checks and covers every vertex, so the function returns true. With hash sets and adjacency lists, the expected runtime is $O(n+m+|D|)$, or $O(n+m)$ when $D\subseteq V$; auxiliary space is $O(n+m)$ including the NetworkX graph. The neighbor scans total at most $2m$.
 
 \subsection*{1(b). NP-completeness via Vertex Cover}
-Dominating Set is in NP: a proposed vertex set is a certificate checked by part (a) in polynomial time. To prove NP-hardness, reduce the decision version of Vertex Cover. The construction below applies to simple undirected graphs. First remove isolated vertices, which never need to be in a vertex cover. Retain every original edge $uv$, and add a fresh vertex $w_{uv}$ joined to both $u$ and $v$. Thus each original edge becomes a triangle, while retaining its original edge.
+Dominating Set is in NP because I can verify a proposed set in polynomial time using part (a). To show NP-hardness, I reduce Vertex Cover to Dominating Set. For a simple undirected graph, I remove isolated vertices, since they do not affect a vertex cover. I keep every original edge $uv$ and add a new vertex $w_{uv}$ connected to both endpoints. Each original edge is now part of a triangle.
 \begin{lstlisting}
 VertexCoverUsingDominatingSet(G, k):
     if k < 0: return False
@@ -39,11 +39,11 @@ If $C$ is a vertex cover of $G$, it dominates every $w_{uv}$ because it contains
 
 Conversely, take any dominating set $D$ of $H$. Replace each chosen $w_{uv}$ with $u$, discarding duplicates. This does not increase its size or lose domination: $N_H[w_{uv}]=\{w_{uv},u,v\}\subseteq N_H[u]$, since $uv$ was retained. The resulting set $C$ consists only of original vertices. Each $w_{uv}$ must now have $u$ or $v$ in $C$, so $C$ covers every original edge. Hence $G$ has a cover of size at most $k$ if and only if $H$ has a dominating set of size at most $k$. An edgeless input produces an empty $H$, correctly accepting exactly when $k\geq0$.
 
-The constructed graph has at most $n+m$ vertices and exactly $3m$ edges. Construction and comparison take $O(n+m)$ time and space, with one oracle call. If its time is $T_{\rm DS}(N,M)$, total time is $O(n+m)+T_{\rm DS}(n'+m,3m)$, where $n'\leq n$ counts nonisolated vertices. Thus a polynomial-time minimum-dominating-set algorithm would yield a polynomial-time Vertex Cover algorithm. Together with NP membership, this establishes NP-completeness of the decision problem.\footnote{Vertex Cover is the selected known NP-complete problem; the supplied material does not identify which problems were covered in class.}
+The constructed graph has at most $n+m$ vertices and exactly $3m$ edges. Construction and comparison take $O(n+m)$ time and space, with one oracle call. If its time is $T_{\rm DS}(N,M)$, total time is $O(n+m)+T_{\rm DS}(n'+m,3m)$, where $n'\leq n$ counts nonisolated vertices. Thus a polynomial-time minimum-dominating-set algorithm would yield a polynomial-time Vertex Cover algorithm. Together with NP membership, this establishes NP-completeness of the decision problem.
 
 \clearpage
 \subsection*{2(a). Greedy dominating set}
-At each step choose a vertex whose closed neighborhood contains the largest number of currently undominated vertices. Mark those vertices dominated and repeat. Ties use NetworkX insertion order. In the preserved setup edges are inserted before the explicit vertex list, so edge order can determine this order.
+My greedy algorithm selects the vertex that covers the most currently undominated vertices, counting the vertex itself. I mark those vertices covered and repeat until none remain. On a tie, I take the first vertex in NetworkX insertion order. Since the graph setup adds edges before the node list, the edge order affects this tie rule.
 \begin{lstlisting}[language=Python]
 def greedyDominatingSet(G):
   #you may, but are not required to, convert G to a networkx graph
@@ -64,19 +64,19 @@ def greedyDominatingSet(G):
 
 While any vertex remains uncovered, some candidate covers at least itself, so each iteration makes progress. The process stops in at most $n$ iterations and returns a dominating set. Each iteration evaluates all closed neighborhoods; their total size is $n+2m$, so the expected runtime is $O(n(n+m))$ with hash sets. Space is $O(n+m)$.
 
-\subsection*{2(b). A counterexample, including the tie rule}
-Let $V=[0,1,2,3,4,5]$ and give the edges in this order:
+\subsection*{2(b). Greedy counterexample}
+For my example, I use $V=[0,1,2,3,4,5]$ and add the edges in this order:
 \[
  E=[(0,4),(0,5),(1,2),(1,3),(1,4),(2,3),(2,4)].
 \]
 \begin{center}\includegraphics[width=.72\linewidth]{greedy_counterexample.png}\end{center}
 The setup inserts vertices in order $[0,4,5,1,2,3]$. Initially vertices $4,1,2$ each cover four vertices, so the tie rule selects $4$. Its closed neighborhood is $\{0,1,2,4\}$, leaving $\{3,5\}$ uncovered. Every candidate that covers an uncovered vertex now gains one; vertex $0$ is first in insertion order, so it is selected and covers $5$. Finally $1$ is the first candidate covering the remaining vertex $3$. The returned sequence is $[4,0,1]$.
 
-But $\{0,1\}$ dominates the graph: $N[0]=\{0,4,5\}$ and $N[1]=\{1,2,3,4\}$. No vertex has degree five, so no single vertex dominates all six vertices; the minimum size is two. Moreover, $4$ can be removed from the greedy output. Thus this example fails both to be minimum (smallest cardinality) and to be minimal (no proper dominating subset). The distinction matters because the question uses the word ``minimal.''
+But $\{0,1\}$ dominates the graph: $N[0]=\{0,4,5\}$ and $N[1]=\{1,2,3,4\}$. No vertex has degree five, so no single vertex dominates all six vertices; the minimum size is two. I can also remove $4$ from the greedy output and still have a dominating set. So the result is neither minimum in size nor minimal under removing vertices.
 
 \clearpage
 \subsection*{3(a). Individuals}
-An individual is a binary list of length $n$. Bit $i$ is one exactly when the $i$th vertex in the fixed NetworkX node order is selected. Each random bit is independently zero or one with equal probability. Arbitrary vertex labels are allowed because list positions, rather than labels, are the genes.
+I represent each individual as a binary list of length $n$. A one at position $i$ means I selected the $i$th vertex in NetworkX node order; a zero means I left it out. I generate each initial bit independently with equal probability of zero or one. Keeping a fixed node order lets me use the same representation even when vertex labels are not consecutive integers.
 \begin{lstlisting}[language=Python]
 def randomIndividual(G):
   # Position i represents the ith vertex in G.nodes() order.
@@ -85,7 +85,7 @@ def randomIndividual(G):
 \end{lstlisting}
 
 \subsection*{3(b). Selection, recombination, and mutation}
-Roulette-wheel selection samples two parents independently with replacement, each with probability proportional to its positive fitness. Single-point crossover swaps suffixes after a uniformly chosen interior cut, producing two children. Empty and one-gene individuals are copied. Mutation flips each child bit independently with probability $1/n$ (using $1/\max(1,n)$ for the empty graph). Parent copies prevent accidental modification of the current population. One unchanged elite is retained each generation.
+I use roulette-wheel selection, so each parent's probability of being selected is proportional to its fitness. I select with replacement, meaning the same individual can be chosen twice. For recombination, I choose an interior cut at random and swap the parents' suffixes to produce two children. I copy individuals with fewer than two genes. Each child bit mutates independently with probability $1/n$, and I use $1/\max(1,n)$ to handle an empty graph. I also keep the best individual unchanged in each generation.
 \begin{lstlisting}[language=Python]
 def selection(pop, fitnesses):
   weights = np.asarray(fitnesses, dtype=float)
@@ -119,11 +119,11 @@ def mutate(ind, p=0.1):
 
 \clearpage
 \subsection*{3(c). Fitness}
-Let $s$ be the number of selected vertices and $u$ the number of undominated vertices. Maximize
+I use $s$ for the number of selected vertices and $u$ for the number of undominated vertices. My fitness function is
 \[
  f=\frac{1}{1+s+(n+1)u}.
 \]
-This is strictly positive, so it can be used directly in roulette selection. Every feasible individual has fitness at least $1/(n+1)$, whereas any infeasible individual has fitness at most $1/(n+2)$. Thus every dominating set outranks every infeasible individual. Among dominating sets, fewer selected vertices gives strictly higher fitness. Evaluation takes $O(n+m)$ expected time.
+I maximize this value. It is always positive, so I can use it directly for roulette-wheel selection. Every feasible individual has fitness at least $1/(n+1)$, whereas any infeasible individual has fitness at most $1/(n+2)$. Thus every dominating set outranks every infeasible individual. Among dominating sets, fewer selected vertices gives strictly higher fitness. Evaluation takes $O(n+m)$ expected time.
 \begin{lstlisting}[language=Python]
 def evalFitness(ind, G):
   H = G if isinstance(G, nx.Graph) else nx.Graph()
@@ -142,7 +142,7 @@ def evalFitness(ind, G):
 \end{lstlisting}
 
 \subsection*{Generation update}
-The following complete driver retains the supplied function interface. It records population statistics before reproduction, so the plotted rows describe populations $0$ through $999$; the returned solution is evaluated after the final reproduction.
+I record the population's minimum, average, and maximum fitness before creating the next generation. The plot therefore shows generations $0$ through $999$. After the last update, I evaluate the final population and return its best individual.
 \begin{lstlisting}[language=Python]
 def runGA(G, popSize=10, generations=100):
   #you may, but are not required to, convert G to a networkx graph
@@ -177,8 +177,8 @@ def runGA(G, popSize=10, generations=100):
 \end{lstlisting}
 
 \clearpage
-\subsection*{3(d). Measured experiment}
-The experiment uses the skeleton's \texttt{nx.path\_graph(100)}: 100 vertices and 99 edges. Strictly, a path of length 100 has 101 vertices; here the supplied executable setup fixes the intended interpretation. Population size is 50, generations are 1000, and NumPy's random seed is 650. There is no repair step or seeded greedy solution.
+\subsection*{3(d). Results and observations}
+I ran the algorithm on \texttt{nx.path\_graph(100)}, matching the skeleton's 100-vertex path. I used a population of 50 for 1000 generations and set NumPy's random seed to 650 so I could reproduce the run.
 \begin{center}\includegraphics[width=.94\linewidth]{fitness.png}\end{center}
 The recorded summary statistics are approximately
 \begin{center}
@@ -188,13 +188,10 @@ Generation & Minimum & Average & Maximum\\\hline
 999 & 0.001541 & 0.013331 & 0.025000
 \end{tabular}
 \end{center}
-The returned solution is a valid dominating set of size 39 with fitness $1/40=0.025$. Its selected vertices are
+My final solution is a valid dominating set with 39 vertices and fitness $1/40=0.025$. The selected vertices are
 \begin{quote}\small
 1, 2, 5, 8, 11, 14, 17, 20, 23, 25, 28, 31, 34, 36, 38, 41, 42, 45, 48, 51, 53, 56, 59, 62, 64, 66, 68, 70, 72, 75, 76, 79, 82, 84, 87, 89, 92, 95, 98.
 \end{quote}
-The maximum rises in steps and never decreases because of elitism. The average improves overall but fluctuates; the minimum remains low and fluctuates because mutation and crossover can create individuals leaving one or more vertices uncovered, which incurs a large penalty. Once feasible solutions appear, their advantage in selection helps the population concentrate on them, while mutation maintains variation. Later plateaus indicate that improvements become less frequent.
+In my run, the maximum fitness rises in steps and never decreases because I preserve the best individual. The average improves overall, but it still fluctuates. The minimum stays low because crossover and mutation can leave vertices uncovered, which causes a large fitness penalty. Once the population finds valid dominating sets, their higher fitness makes them more likely to reproduce. The later plateaus show that improvements become less frequent.
 
-This run does not reach the optimum. Each chosen vertex on a path covers at most three vertices, so at least $\lceil100/3\rceil=34$ vertices are necessary. The set $\{1,4,7,\ldots,97,99\}$ has 34 vertices and dominates the path, proving that bound is achievable. The observed size 39 is five above optimum. A single stochastic run demonstrates behavior but provides no optimality guarantee.
-
-\subsection*{Reproducibility and verification}
-\texttt{run\_experiment.py} reproduces the figure and exports all 1000 statistic rows to \texttt{fitness\_history.csv}, along with the final individual in \texttt{experiment\_results.json}. \texttt{verify.py} compares the verifier with an independent definition on every graph in the NetworkX graph atlas with at most six vertices (33,873 comparisons), checks greedy gains and coverage, and checks GA operators and elitism on empty, disconnected, and path graphs. The supplied testing script is included unchanged.
+My run did not reach the optimum. Each chosen vertex on a path covers at most three vertices, so at least $\lceil100/3\rceil=34$ vertices are necessary. The set $\{1,4,7,\ldots,97,99\}$ has 34 vertices and dominates the path, proving that bound is achievable. My solution uses five more vertices than the optimum. The run finds a small dominating set, but the genetic algorithm does not guarantee the smallest one.

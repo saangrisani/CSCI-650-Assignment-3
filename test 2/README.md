@@ -39,6 +39,6 @@ The verifier passed 33,873 comparisons against an independent implementation on 
 
 The experiment returned a valid dominating set of size 39 with fitness 0.025. The optimum on this path is 34, so this run does not establish optimality. The path has 100 vertices and 99 edges, matching the supplied skeleton; “length 100” interpreted literally as number of edges would instead require 101 vertices. Statistics record the populations before reproduction, generations 0 through 999. The returned individual is from the population after the final reproduction.
 
-Greedy ties use NetworkX insertion order, which in the supplied setup is determined by adding edges before adding the explicit node list. The counterexample and its trace use that same rule. Vertex Cover was chosen for the NP-hardness proof; the supplied materials do not identify the list of NP-complete problems discussed in class.
+Greedy ties use NetworkX insertion order, which in the supplied setup is determined by adding edges before adding the explicit node list. The counterexample and its trace use that same rule. Vertex Cover is used for the NP-hardness proof.
 
 Files are uploaded to GitHub only. Canvas and INGInious submissions are not performed by these scripts.
